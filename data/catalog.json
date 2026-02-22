@@ -1,0 +1,26 @@
+[
+  {
+    "id": "top-1",
+    "name": "Blue casual t-shirt",
+    "category": "top",
+    "color": "blue",
+    "colors": ["blue", "navy"],
+    "occasion": ["casual"],
+    "style": ["casual", "relaxed"],
+    "imageUrl": "",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "tags": ["t-shirt", "summer"]
+  },
+  {
+    "id": "bottom-1",
+    "name": "Black jeans",
+    "category": "bottom",
+    "color": "black",
+    "colors": ["black", "dark"],
+    "occasion": ["casual", "business"],
+    "style": ["slim", "versatile"],
+    "imageUrl": "",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "tags": ["jeans", "pants"]
+  }
+]
