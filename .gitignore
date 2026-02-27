@@ -4,3 +4,4 @@ promts.md
 node_modules/
 .next/
 .cursor
+data/generated/
