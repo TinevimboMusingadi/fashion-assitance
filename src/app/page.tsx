@@ -3,6 +3,42 @@
 import { useState, useEffect } from "react";
 import { Chat } from "@/components/chat";
 
+function IndexButton() {
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleIndex = async () => {
+    setLoading(true);
+    setStatus(null);
+    try {
+      const res = await fetch("/api/index", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data as { error?: string }).error ?? "Failed");
+      setStatus(`Indexed ${(data as { indexed?: number }).indexed ?? 0} items`);
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Index failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handleIndex}
+        disabled={loading}
+        className="rounded bg-silver/20 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-silver/30 disabled:opacity-50"
+      >
+        {loading ? "Indexing..." : "Index Wardrobe"}
+      </button>
+      {status && (
+        <span className="text-muted text-xs">{status}</span>
+      )}
+    </div>
+  );
+}
+
 function Clock() {
   const [time, setTime] = useState<string>("");
 
@@ -33,16 +69,19 @@ export default function Home() {
           <h1 className="text-xl font-semibold text-foreground">
             Fashion Assistant
           </h1>
-          <Clock />
+          <div className="flex items-center gap-4">
+            <IndexButton />
+            <Clock />
+          </div>
         </div>
       </header>
 
-      <div className="flex flex-1 gap-6 p-6">
-        <section className="flex flex-1 flex-col min-w-0">
+      <div className="flex flex-1 gap-6 p-6 min-h-0">
+        <section className="flex flex-1 flex-col min-w-0 min-h-[480px]">
           <div className="mb-4">
             <h2 className="text-muted text-sm font-medium">Chat</h2>
           </div>
-          <div className="flex-1 min-h-[400px]">
+          <div className="flex-1 min-h-[420px] overflow-hidden">
             <Chat onImageUrl={setOutfitImageUrl} />
           </div>
         </section>
