@@ -1,1 +1,20 @@
-{"weekKey":"2026-02-17","logs":[]}
+{
+  "weekKey": "2026-02-22",
+  "logs": [
+    {
+      "date": "2026-02-23",
+      "outfitIds": [
+        "top-1",
+        "bottom-1"
+      ]
+    },
+    {
+      "date": "2026-02-27",
+      "outfitIds": [
+        "sweaters_PXL_20260222_205024224",
+        "sweaters_PXL_20260222_205135354",
+        "baggy_jeans_PXL_20260222_205605385"
+      ]
+    }
+  ]
+}

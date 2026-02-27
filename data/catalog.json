@@ -1,26 +1,703 @@
 [
   {
-    "id": "top-1",
-    "name": "Blue casual t-shirt",
-    "category": "top",
+    "id": "baggy_jeans_PXL_20260222_205605385",
+    "name": "Classic Straight Leg Jeans",
+    "category": "bottom",
     "color": "blue",
-    "colors": ["blue", "navy"],
-    "occasion": ["casual"],
-    "style": ["casual", "relaxed"],
-    "imageUrl": "",
-    "createdAt": "2025-01-01T00:00:00Z",
-    "tags": ["t-shirt", "summer"]
+    "colors": [
+      "blue"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "denim",
+      "straight leg",
+      "classic"
+    ],
+    "imageUrl": "/api/image?path=baggy%20jeans%2FPXL_20260222_205605385.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "jeans",
+      "denim",
+      "straight leg",
+      "blue jeans",
+      "casual wear"
+    ]
   },
   {
-    "id": "bottom-1",
-    "name": "Black jeans",
+    "id": "baggy_jeans_PXL_20260222_205706442",
+    "name": "Faded Wash Denim Jeans",
+    "category": "bottom",
+    "color": "gray",
+    "colors": [
+      "gray"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "denim",
+      "jeans",
+      "straight leg"
+    ],
+    "imageUrl": "/api/image?path=baggy%20jeans%2FPXL_20260222_205706442.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "denim",
+      "jeans",
+      "gray wash",
+      "casual wear"
+    ]
+  },
+  {
+    "id": "baggy_jeans_PXL_20260222_205850492",
+    "name": "Black Straight Leg Jeans",
     "category": "bottom",
     "color": "black",
-    "colors": ["black", "dark"],
-    "occasion": ["casual", "business"],
-    "style": ["slim", "versatile"],
-    "imageUrl": "",
-    "createdAt": "2025-01-01T00:00:00Z",
-    "tags": ["jeans", "pants"]
+    "colors": [
+      "black"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "straight leg",
+      "denim",
+      "jeans"
+    ],
+    "imageUrl": "/api/image?path=baggy%20jeans%2FPXL_20260222_205850492.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "jeans",
+      "denim",
+      "straight leg",
+      "black jeans",
+      "pants"
+    ]
+  },
+  {
+    "id": "baggy_jeans_PXL_20260222_205927552",
+    "name": "Grey Wash Wide Leg Jeans",
+    "category": "bottom",
+    "color": "grey",
+    "colors": [
+      "grey"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "wide-leg",
+      "high-waisted",
+      "denim"
+    ],
+    "imageUrl": "/api/image?path=baggy%20jeans%2FPXL_20260222_205927552.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "jeans",
+      "denim",
+      "wide-leg",
+      "high waisted",
+      "grey wash"
+    ]
+  },
+  {
+    "id": "bottom_and_kaggle_black_bottom",
+    "name": "Black Jogger Pants",
+    "category": "bottom",
+    "color": "black",
+    "colors": [
+      "black"
+    ],
+    "occasion": [
+      "casual",
+      "athletic"
+    ],
+    "style": [
+      "joggers",
+      "athletic",
+      "casual"
+    ],
+    "imageUrl": "/api/image?path=bottom%20and%20kaggle%2Fblack_bottom.jpeg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "joggers",
+      "black pants",
+      "drawstring",
+      "athletic wear"
+    ]
+  },
+  {
+    "id": "bottom_and_kaggle_black_bottom_shoe_cover",
+    "name": "Black Cargo Sweatpants",
+    "category": "bottom",
+    "color": "black",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "cargo",
+      "sweatpants",
+      "relaxed fit"
+    ],
+    "imageUrl": "/api/image?path=bottom%20and%20kaggle%2Fblack_bottom_shoe_cover.jpeg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "cargo pants",
+      "sweatpants",
+      "drawstring waist",
+      "pockets",
+      "casual"
+    ]
+  },
+  {
+    "id": "bottom_and_kaggle_grey_bottom",
+    "name": "Lacoste Fleece Jogger Pants",
+    "category": "bottom",
+    "color": "gray",
+    "colors": [
+      "gray"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "joggers",
+      "sweatpants",
+      "drawstring"
+    ],
+    "imageUrl": "/api/image?path=bottom%20and%20kaggle%2Fgrey_bottom.jpeg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "joggers",
+      "sweatpants",
+      "casual wear",
+      "fleece",
+      "drawstring",
+      "Lacoste",
+      "bottoms"
+    ]
+  },
+  {
+    "id": "bottom_and_kaggle_military_kaggle",
+    "name": "Camo Print Elastic Waist Cargo Pants",
+    "category": "bottom",
+    "color": "camouflage",
+    "colors": [
+      "camouflage",
+      "grey",
+      "brown"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "cargo",
+      "straight leg",
+      "camouflage"
+    ],
+    "imageUrl": "/api/image?path=bottom%20and%20kaggle%2Fmilitary_kaggle.jpeg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "camo",
+      "cargo pants",
+      "elastic waist",
+      "drawstring"
+    ]
+  },
+  {
+    "id": "bottom_and_kaggle_tanish_kaggle",
+    "name": "Beige Utility Cargo Pants",
+    "category": "bottom",
+    "color": "beige",
+    "colors": [
+      "beige"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "cargo",
+      "utility",
+      "straight leg"
+    ],
+    "imageUrl": "/api/image?path=bottom%20and%20kaggle%2Ftanish_kaggle.jpeg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "cargo pants",
+      "utility pants",
+      "pockets",
+      "drawstring waist",
+      "beige pants"
+    ]
+  },
+  {
+    "id": "shorts_PXL_20260222_210113907",
+    "name": "Men's Relaxed Fit Cargo Shorts",
+    "category": "bottom",
+    "color": "tan",
+    "colors": [
+      "tan"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "cargo",
+      "relaxed fit",
+      "shorts"
+    ],
+    "imageUrl": "/api/image?path=shorts%2FPXL_20260222_210113907.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "cargo shorts",
+      "shorts",
+      "relaxed fit",
+      "casual"
+    ]
+  },
+  {
+    "id": "shorts_PXL_20260222_210132083NIGHT",
+    "name": "Men's Timberland cargo shorts",
+    "category": "bottom",
+    "color": "tan",
+    "colors": [
+      "tan"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "cargo",
+      "shorts",
+      "relaxed"
+    ],
+    "imageUrl": "/api/image?path=shorts%2FPXL_20260222_210132083.NIGHT.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "shorts",
+      "cargo shorts",
+      "khaki shorts",
+      "Timberland",
+      "mens"
+    ]
+  },
+  {
+    "id": "shorts_PXL_20260222_210850250",
+    "name": "Men's Casual Olive Green Shorts",
+    "category": "bottom",
+    "color": "olive green",
+    "colors": [
+      "olive green"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "athletic",
+      "sport",
+      "shorts"
+    ],
+    "imageUrl": "/api/image?path=shorts%2FPXL_20260222_210850250.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "shorts",
+      "athletic",
+      "sport",
+      "casual",
+      "olive green",
+      "men's"
+    ]
+  },
+  {
+    "id": "shorts_PXL_20260222_210924687",
+    "name": "Casual Drawstring Shorts",
+    "category": "bottom",
+    "color": "black",
+    "colors": [
+      "black"
+    ],
+    "occasion": [
+      "casual",
+      "athletic"
+    ],
+    "style": [
+      "casual",
+      "sporty"
+    ],
+    "imageUrl": "/api/image?path=shorts%2FPXL_20260222_210924687.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "shorts",
+      "drawstring",
+      "athletic",
+      "casual",
+      "lounge",
+      "comfortable"
+    ]
+  },
+  {
+    "id": "slides_PXL_20260222_211933983",
+    "name": "Slip-On Sandals",
+    "category": "shoes",
+    "color": "beige",
+    "colors": [
+      "beige"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "slide",
+      "slip-on"
+    ],
+    "imageUrl": "/api/image?path=slides%2FPXL_20260222_211933983.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "sandals",
+      "slides",
+      "casual footwear"
+    ]
+  },
+  {
+    "id": "slides_PXL_20260222_212008762PORTRAIT",
+    "name": "Adidas Adilette 22 Slides",
+    "category": "shoes",
+    "color": "black",
+    "colors": [
+      "black"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "slide",
+      "slip-on",
+      "sporty"
+    ],
+    "imageUrl": "/api/image?path=slides%2FPXL_20260222_212008762.PORTRAIT.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "slides",
+      "casual",
+      "sandals",
+      "slip-on",
+      "Adidas"
+    ]
+  },
+  {
+    "id": "sneakers_PXL_20260222_211809462",
+    "name": "New Balance 530 Running Shoes",
+    "category": "shoes",
+    "color": "white",
+    "colors": [
+      "white",
+      "silver",
+      "black",
+      "navy"
+    ],
+    "occasion": [
+      "athletic"
+    ],
+    "style": [
+      "running",
+      "sporty",
+      "casual"
+    ],
+    "imageUrl": "/api/image?path=sneakers%2FPXL_20260222_211809462.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "New Balance",
+      "running shoes",
+      "530",
+      "athletic footwear",
+      "white sneakers"
+    ]
+  },
+  {
+    "id": "sneakers_PXL_20260222_211851752",
+    "name": "New Balance 530 Sneakers",
+    "category": "shoes",
+    "color": "white",
+    "colors": [
+      "white",
+      "black"
+    ],
+    "occasion": [
+      "casual",
+      "athletic"
+    ],
+    "style": [
+      "running",
+      "sneaker",
+      "retro"
+    ],
+    "imageUrl": "/api/image?path=sneakers%2FPXL_20260222_211851752.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "New Balance",
+      "530",
+      "running shoes",
+      "sneakers",
+      "athletic shoes"
+    ]
+  },
+  {
+    "id": "socks_PXL_20260222_212034473PORTRAITORIGINAL",
+    "name": "Nike ASCOOL Low Cut Socks",
+    "category": "socks",
+    "color": "white",
+    "colors": [
+      "white",
+      "black"
+    ],
+    "occasion": [
+      "athletic",
+      "casual"
+    ],
+    "style": [
+      "sporty",
+      "low cut",
+      "performance"
+    ],
+    "imageUrl": "/api/image?path=socks%2FPXL_20260222_212034473.PORTRAIT.ORIGINAL.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "socks",
+      "nike",
+      "athletic",
+      "low cut",
+      "ASCOOL",
+      "sport",
+      "performance",
+      "sports socks"
+    ]
+  },
+  {
+    "id": "socks_PXL_20260222_212039049PORTRAIT",
+    "name": "GCDS Striped Ankle Socks",
+    "category": "socks",
+    "color": "black",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "athletic",
+      "striped",
+      "logo"
+    ],
+    "imageUrl": "/api/image?path=socks%2FPXL_20260222_212039049.PORTRAIT.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "socks",
+      "ankle socks",
+      "stripes",
+      "GCDS",
+      "black and white"
+    ]
+  },
+  {
+    "id": "socks_PXL_20260222_212045273PORTRAITORIGINAL",
+    "name": "Adidas Ankle Socks",
+    "category": "socks",
+    "color": "black",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "occasion": [
+      "athletic",
+      "casual"
+    ],
+    "style": [
+      "ankle",
+      "sporty",
+      "branded"
+    ],
+    "imageUrl": "/api/image?path=socks%2FPXL_20260222_212045273.PORTRAIT.ORIGINAL.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "socks",
+      "ankle socks",
+      "black socks",
+      "adidas",
+      "athletic"
+    ]
+  },
+  {
+    "id": "socks_PXL_20260222_212050115PORTRAITORIGINAL",
+    "name": "Nike Everyday Plus Cushioned Training Crew Socks",
+    "category": "socks",
+    "color": "black",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "occasion": [
+      "athletic"
+    ],
+    "style": [
+      "crew",
+      "sporty",
+      "athletic"
+    ],
+    "imageUrl": "/api/image?path=socks%2FPXL_20260222_212050115.PORTRAIT.ORIGINAL.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "socks",
+      "nike",
+      "training",
+      "cushioned",
+      "crew socks",
+      "athletic"
+    ]
+  },
+  {
+    "id": "sweaters_PXL_20260222_205024224",
+    "name": "Graphic Print Crewneck Sweatshirt",
+    "category": "top",
+    "color": "light blue",
+    "colors": [
+      "light blue",
+      "black"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "sweatshirt",
+      "graphic",
+      "crewneck"
+    ],
+    "imageUrl": "/api/image?path=sweaters%2FPXL_20260222_205024224.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "sweatshirt",
+      "crewneck",
+      "graphic print",
+      "long sleeve",
+      "casual top"
+    ]
+  },
+  {
+    "id": "sweaters_PXL_20260222_205135354",
+    "name": "Olive Green Graphic Sweatshirt",
+    "category": "top",
+    "color": "olive",
+    "colors": [
+      "olive",
+      "black"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "sweatshirt",
+      "graphic",
+      "relaxed"
+    ],
+    "imageUrl": "/api/image?path=sweaters%2FPXL_20260222_205135354.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "sweatshirt",
+      "long sleeve",
+      "graphic",
+      "olive green",
+      "crewneck",
+      "casual"
+    ]
+  },
+  {
+    "id": "sweaters_PXL_20260222_205241256",
+    "name": "Pink Crew Neck Graphic Sweatshirt",
+    "category": "top",
+    "color": "pink",
+    "colors": [
+      "pink",
+      "blue"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "sweatshirt",
+      "crew neck",
+      "graphic"
+    ],
+    "imageUrl": "/api/image?path=sweaters%2FPXL_20260222_205241256.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "sweatshirt",
+      "crew neck",
+      "long sleeve",
+      "graphic",
+      "pink",
+      "NicBack",
+      "casual"
+    ]
+  },
+  {
+    "id": "sweaters_PXL_20260222_205332577NIGHT",
+    "name": "Paper Chaser Graphic Print Sweatshirt",
+    "category": "top",
+    "color": "gray",
+    "colors": [
+      "gray",
+      "black",
+      "olive"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "sweatshirt",
+      "graphic",
+      "streetwear"
+    ],
+    "imageUrl": "/api/image?path=sweaters%2FPXL_20260222_205332577.NIGHT.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "sweatshirt",
+      "long sleeve",
+      "graphic print",
+      "crew neck",
+      "paper chaser"
+    ]
+  },
+  {
+    "id": "sweaters_PXL_20260222_205453424NIGHT",
+    "name": "Crewneck Sweatshirt with '1977' Graphic",
+    "category": "top",
+    "color": "beige",
+    "colors": [
+      "beige",
+      "black"
+    ],
+    "occasion": [
+      "casual"
+    ],
+    "style": [
+      "crewneck",
+      "long sleeve",
+      "athletic"
+    ],
+    "imageUrl": "/api/image?path=sweaters%2FPXL_20260222_205453424.NIGHT.jpg",
+    "createdAt": "2026-02-27T05:47:50.339Z",
+    "tags": [
+      "sweatshirt",
+      "1977",
+      "crewneck",
+      "long sleeve",
+      "pullover"
+    ]
   }
 ]
