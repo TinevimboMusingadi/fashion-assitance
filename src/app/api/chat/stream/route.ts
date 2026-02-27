@@ -27,13 +27,27 @@ export async function POST(request: NextRequest) {
     async start(controller) {
       const sendLog = (log: string) => {
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: "log", message: log })}\n\n`)
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "log", message: log })}\n\n`
+          )
+        );
+      };
+      const sendImageUrl = (url: string) => {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "image", imageUrl: url })}\n\n`
+          )
         );
       };
 
       try {
         const catalog = await getCatalog();
-        const response = await runAgent(message, catalog, sendLog);
+        const response = await runAgent(
+          message,
+          catalog,
+          sendLog,
+          sendImageUrl
+        );
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({ type: "done", response })}\n\n`
