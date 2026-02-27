@@ -47,3 +47,9 @@ export interface WeeklyOutfitLog {
   date: string;
   outfitIds: string[];
 }
+
+export interface PersonPhotoMetadata {
+  id: string;
+  path: string;
+  imageUrl: string;
+}
