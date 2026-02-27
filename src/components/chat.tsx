@@ -76,10 +76,13 @@ export function Chat({ onImageUrl }: ChatProps) {
                   message?: string;
                   response?: string;
                   error?: string;
+                  imageUrl?: string;
                 };
                 if (data.type === "log" && data.message) {
                   newLogs.push(data.message);
                   setLogs([...newLogs]);
+                } else if (data.type === "image" && data.imageUrl && onImageUrl) {
+                  onImageUrl(data.imageUrl);
                 } else if (data.type === "done" && data.response) {
                   response = data.response;
                 } else if (data.type === "error" && data.error) {
@@ -111,8 +114,8 @@ export function Chat({ onImageUrl }: ChatProps) {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex-1 overflow-y-auto space-y-4 rounded-lg border border-border bg-card p-4">
+    <div className="flex h-full min-h-[400px] flex-col gap-4">
+      <div className="flex-1 min-h-[280px] overflow-y-auto space-y-4 rounded-lg border border-border bg-card p-4">
         {messages.length === 0 && (
           <p className="text-muted text-center text-sm">
             Ask for outfit suggestions, search your wardrobe, or plan what to
