@@ -12,7 +12,7 @@ import {
   GENERATE_OUTFIT_SCHEMA,
 } from "./tools";
 import type { ClothingMetadata, WeeklyOutfitLog } from "@/lib/types";
-import type { GenerateOutfitInput, PlanOutfitResult } from "./tools";
+import type { GenerateOutfitInput, GenerateOutfitResult, PlanOutfitResult } from "./tools";
 import { getWeather, formatWeatherForAgent } from "@/lib/weather/client";
 import {
   getWeeklyLog,
@@ -126,18 +126,17 @@ The user wants to SEE themselves wearing the outfit. Always generate the image w
       const text = extractText(response);
       if (lastOutfitResult && !imageGenerated && onImageUrl) {
         onLog?.("Generating outfit image...");
-        const genResult = await generateOutfitImage({
-          outfit: lastOutfitResult,
-        });
-        if (
-          genResult &&
-          typeof genResult === "object" &&
-          (genResult as { imageUrl?: string }).imageUrl
-        ) {
+        const genResult = await generateOutfitImage(
+          { outfit: lastOutfitResult },
+          onLog ?? (() => {}),
+        );
+        if (genResult?.success && genResult.imageUrls?.length) {
           imageGenerated = true;
-          onImageUrl((genResult as { imageUrl: string }).imageUrl);
-        } else if (genResult && typeof genResult === "object" && "message" in genResult) {
-          lastImageError = (genResult as { message?: string }).message ?? null;
+          for (const url of genResult.imageUrls) {
+            onImageUrl(url);
+          }
+        } else if (genResult?.message) {
+          lastImageError = genResult.message;
         }
       }
       if (text) return text;
@@ -186,17 +185,14 @@ The user wants to SEE themselves wearing the outfit. Always generate the image w
         ) {
           genInput.outfit = lastOutfitResult;
         }
-        const genResult = await generateOutfitImage(genInput);
+        const genResult = await generateOutfitImage(genInput, onLog ?? (() => {}));
         result = genResult;
-        if (
-          genResult &&
-          typeof genResult === "object" &&
-          "imageUrl" in genResult &&
-          (genResult as { imageUrl?: string }).imageUrl
-        ) {
+        if (genResult?.success && (genResult as GenerateOutfitResult).imageUrls?.length) {
           lastImageError = null;
           imageGenerated = true;
-          onImageUrl?.((genResult as { imageUrl: string }).imageUrl);
+          for (const url of (genResult as GenerateOutfitResult).imageUrls) {
+            onImageUrl?.(url);
+          }
         } else if (genResult && typeof genResult === "object" && "message" in genResult) {
           lastImageError = (genResult as { message?: string }).message ?? "Image generation failed";
         }

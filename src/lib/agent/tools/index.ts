@@ -12,4 +12,5 @@ export {
 export type {
   GenerateOutfitInput,
   GenerateOutfitResult,
+  LogCallback as GenerateLogCallback,
 } from "./generate-outfit";
