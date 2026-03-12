@@ -53,3 +53,17 @@ export interface PersonPhotoMetadata {
   path: string;
   imageUrl: string;
 }
+
+export interface GeneratedImageRecord {
+  id: string;
+  imageUrl: string;
+  filePath: string;
+  createdAt: string;
+  outfitItems: {
+    name: string;
+    category: string;
+    imageUrl: string;
+  }[];
+  personPhoto: string;
+  prompt: string;
+}
