@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AgentLogBlock } from "./agent-log-block";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  logs?: string[];
+  images?: string[];
 }
 
 interface ChatProps {
@@ -15,25 +18,12 @@ export function Chat({ onImageUrl }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [streamingLogs, setStreamingLogs] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const logsRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const scrollLogsToBottom = () => {
-    logsRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    scrollLogsToBottom();
-  }, [logs]);
+  }, [messages, streamingLogs]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +33,7 @@ export function Chat({ onImageUrl }: ChatProps) {
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setLoading(true);
-    setLogs([]);
+    setStreamingLogs([]);
 
     try {
       const res = await fetch("/api/chat/stream", {
@@ -60,7 +50,8 @@ export function Chat({ onImageUrl }: ChatProps) {
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let response = "";
-      const newLogs: string[] = [];
+      const collectedLogs: string[] = [];
+      const collectedImages: string[] = [];
 
       if (reader) {
         while (true) {
@@ -69,29 +60,29 @@ export function Chat({ onImageUrl }: ChatProps) {
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split("\n");
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6)) as {
-                  type?: string;
-                  message?: string;
-                  response?: string;
-                  error?: string;
-                  imageUrl?: string;
-                };
-                if (data.type === "log" && data.message) {
-                  newLogs.push(data.message);
-                  setLogs([...newLogs]);
-                } else if (data.type === "image" && data.imageUrl && onImageUrl) {
-                  onImageUrl(data.imageUrl);
-                } else if (data.type === "done" && data.response) {
-                  response = data.response;
-                } else if (data.type === "error" && data.error) {
-                  throw new Error(data.error);
-                }
-              } catch (parseErr) {
-                if (parseErr instanceof SyntaxError) continue;
-                throw parseErr;
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const data = JSON.parse(line.slice(6)) as {
+                type?: string;
+                message?: string;
+                response?: string;
+                error?: string;
+                imageUrl?: string;
+              };
+              if (data.type === "log" && data.message) {
+                collectedLogs.push(data.message);
+                setStreamingLogs([...collectedLogs]);
+              } else if (data.type === "image" && data.imageUrl) {
+                collectedImages.push(data.imageUrl);
+                onImageUrl?.(data.imageUrl);
+              } else if (data.type === "done" && data.response) {
+                response = data.response;
+              } else if (data.type === "error" && data.error) {
+                throw new Error(data.error);
               }
+            } catch (parseErr) {
+              if (parseErr instanceof SyntaxError) continue;
+              throw parseErr;
             }
           }
         }
@@ -99,7 +90,12 @@ export function Chat({ onImageUrl }: ChatProps) {
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: response || "No response received." },
+        {
+          role: "assistant",
+          content: response || "No response received.",
+          logs: collectedLogs.length > 0 ? collectedLogs : undefined,
+          images: collectedImages.length > 0 ? collectedImages : undefined,
+        },
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -109,18 +105,21 @@ export function Chat({ onImageUrl }: ChatProps) {
       ]);
     } finally {
       setLoading(false);
-      setLogs([]);
+      setStreamingLogs([]);
     }
   };
 
   return (
-    <div className="flex h-full min-h-[400px] flex-col gap-4">
-      <div className="flex-1 min-h-[280px] overflow-y-auto space-y-4 rounded-lg border border-border bg-card p-4">
+    <div className="flex h-full min-h-[400px] flex-col">
+      {/* Messages */}
+      <div className="flex-1 min-h-[280px] overflow-y-auto space-y-3 rounded-xl border border-border bg-card/50 p-4 scrollbar-thin">
         {messages.length === 0 && (
-          <p className="text-muted text-center text-sm">
-            Ask for outfit suggestions, search your wardrobe, or plan what to
-            wear based on the weather.
-          </p>
+          <div className="flex h-full items-center justify-center">
+            <p className="text-muted text-center text-sm">
+              Ask for outfit suggestions, search your wardrobe, or plan what to
+              wear based on the weather.
+            </p>
+          </div>
         )}
         {messages.map((m, i) => (
           <div
@@ -128,55 +127,81 @@ export function Chat({ onImageUrl }: ChatProps) {
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 ${
+              className={`max-w-[88%] rounded-2xl px-4 py-2.5 ${
                 m.role === "user"
-                  ? "bg-accent text-foreground"
-                  : "bg-border/50 text-foreground"
+                  ? "bg-accent text-foreground rounded-br-md"
+                  : "bg-border/40 text-foreground rounded-bl-md"
               }`}
             >
-              <p className="whitespace-pre-wrap text-sm">{m.content}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {m.content}
+              </p>
+              {m.role === "assistant" && m.logs && m.logs.length > 0 && (
+                <AgentLogBlock logs={m.logs} generatedImages={m.images} />
+              )}
             </div>
           </div>
         ))}
+
+        {/* Streaming state */}
         {loading && (
           <div className="flex justify-start">
-            <div className="rounded-lg bg-border/50 px-3 py-2">
-              <span className="text-muted text-sm">Thinking...</span>
+            <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-border/40 px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-silver [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-silver [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-silver [animation-delay:300ms]" />
+                </div>
+                <span className="text-muted text-xs">
+                  {streamingLogs.length > 0
+                    ? streamingLogs[streamingLogs.length - 1]
+                    : "Thinking..."}
+                </span>
+              </div>
+              {streamingLogs.length > 1 && (
+                <div className="mt-2 max-h-20 overflow-y-auto scrollbar-thin">
+                  <ul className="space-y-px text-[11px] font-mono text-muted/70">
+                    {streamingLogs.slice(0, -1).map((log, i) => (
+                      <li key={i} className="truncate">{log}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {logs.length > 0 && (
-        <div
-          ref={logsRef}
-          className="max-h-24 overflow-y-auto rounded border border-border bg-card/50 px-3 py-2"
-        >
-          <p className="text-muted mb-1 text-xs font-medium">Agent logs</p>
-          <ul className="text-muted space-y-0.5 text-xs">
-            {logs.map((log, i) => (
-              <li key={i}>{log}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      {/* Input */}
+      <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="What should I wear today?"
-          className="flex-1 rounded border border-border bg-card px-4 py-2 text-foreground placeholder:text-muted focus:border-silver focus:outline-none focus:ring-1 focus:ring-silver"
+          className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-silver/50 focus:outline-none focus:ring-1 focus:ring-silver/30 transition-colors"
           disabled={loading}
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="rounded bg-silver/20 px-4 py-2 text-sm font-medium text-foreground hover:bg-silver/30 disabled:opacity-50"
+          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-all hover:bg-foreground/90 active:scale-95 disabled:opacity-30 disabled:active:scale-100"
         >
-          Send
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 19V5" />
+            <path d="m5 12 7-7 7 7" />
+          </svg>
         </button>
       </form>
     </div>
