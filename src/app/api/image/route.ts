@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import { join, resolve } from "path";
-
-const DATA_DIR = join(process.cwd(), "data");
+import { downloadFile } from "@/lib/storage/gcs-client";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -13,24 +10,25 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 export async function GET(request: NextRequest) {
-  const pathParam = request.nextUrl.searchParams.get("path");
-  if (!pathParam?.trim()) {
+  const storagePath = request.nextUrl.searchParams.get("path");
+  if (!storagePath?.trim()) {
     return NextResponse.json({ error: "path is required" }, { status: 400 });
   }
 
-  const decodedPath = decodeURIComponent(pathParam).replace(/^\/+/, "");
-  const resolved = resolve(join(DATA_DIR, decodedPath));
+  const bucketType = storagePath.includes("/wardrobe/")
+    ? ("wardrobes" as const)
+    : storagePath.includes("/generated/")
+      ? ("generated" as const)
+      : ("profiles" as const);
 
-  if (!resolved.startsWith(resolve(DATA_DIR))) {
-    return NextResponse.json({ error: "Invalid path" }, { status: 403 });
-  }
-
-  const ext = decodedPath.toLowerCase().slice(decodedPath.lastIndexOf("."));
+  const ext = storagePath
+    .toLowerCase()
+    .slice(storagePath.lastIndexOf("."));
   const mime = MIME_TYPES[ext] ?? "application/octet-stream";
 
   try {
-    const buffer = await readFile(resolved);
-    return new NextResponse(buffer, {
+    const buffer = await downloadFile(bucketType, storagePath);
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": mime,
         "Cache-Control": "public, max-age=3600",
