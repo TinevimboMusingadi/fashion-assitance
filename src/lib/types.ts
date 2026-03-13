@@ -26,11 +26,17 @@ export interface ClothingMetadata {
   id: string;
   name: string;
   category: ClothingCategory;
+  /**
+   * Finer-grained grouping within a category, e.g.
+   * bottom -> jeans / chinos / track-pants, top -> t-shirt / hoodie.
+   */
+  subCategory?: string;
   color: string;
   colors: string[];
   occasion: Occasion[];
   style: string[];
   imageUrl: string;
+  storagePath?: string;
   createdAt: string;
   tags?: string[];
 }
@@ -58,6 +64,7 @@ export interface GeneratedImageRecord {
   id: string;
   imageUrl: string;
   filePath: string;
+  storagePath?: string;
   createdAt: string;
   outfitItems: {
     name: string;
