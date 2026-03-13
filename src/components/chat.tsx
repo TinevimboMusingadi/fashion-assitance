@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AgentLogBlock } from "./agent-log-block";
+import { useAuth } from "@/lib/firebase/auth-context";
 
 interface Message {
   role: "user" | "assistant";
@@ -12,18 +13,63 @@ interface Message {
 
 interface ChatProps {
   onImageUrl?: (url: string) => void;
+  sessionId?: string | null;
 }
 
-export function Chat({ onImageUrl }: ChatProps) {
+export function Chat({ onImageUrl, sessionId }: ChatProps) {
+  const { token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streamingLogs, setStreamingLogs] = useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingLogs]);
+
+  const loadHistory = useCallback(async () => {
+    if (!sessionId || !token) {
+      setMessages([]);
+      setHistoryLoaded(true);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as Message[];
+        setMessages(data);
+      }
+    } catch {
+      // silent
+    } finally {
+      setHistoryLoaded(true);
+    }
+  }, [sessionId, token]);
+
+  useEffect(() => {
+    setHistoryLoaded(false);
+    loadHistory();
+  }, [loadHistory]);
+
+  const saveMessage = async (msg: Message) => {
+    if (!sessionId || !token) return;
+    try {
+      await fetch(`/api/sessions/${sessionId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(msg),
+      });
+    } catch {
+      // non-critical
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,20 +77,27 @@ export function Chat({ onImageUrl }: ChatProps) {
     if (!text || loading) return;
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
+    const userMsg: Message = { role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    await saveMessage(userMsg);
     setLoading(true);
     setStreamingLogs([]);
 
     try {
       const res = await fetch("/api/chat/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: text, sessionId }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        throw new Error(
+          (err as { error?: string }).error ?? `HTTP ${res.status}`,
+        );
       }
 
       const reader = res.body?.getReader();
@@ -88,30 +141,37 @@ export function Chat({ onImageUrl }: ChatProps) {
         }
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: response || "No response received.",
-          logs: collectedLogs.length > 0 ? collectedLogs : undefined,
-          images: collectedImages.length > 0 ? collectedImages : undefined,
-        },
-      ]);
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: response || "No response received.",
+        logs: collectedLogs.length > 0 ? collectedLogs : undefined,
+        images: collectedImages.length > 0 ? collectedImages : undefined,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+      await saveMessage(assistantMsg);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `Error: ${msg}` },
-      ]);
+      const msg =
+        err instanceof Error ? err.message : "Something went wrong.";
+      const errMsg: Message = { role: "assistant", content: `Error: ${msg}` };
+      setMessages((prev) => [...prev, errMsg]);
+      await saveMessage(errMsg);
     } finally {
       setLoading(false);
       setStreamingLogs([]);
     }
   };
 
+  if (!historyLoaded) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full min-h-[400px] flex-col">
-      {/* Messages */}
       <div className="flex-1 min-h-[280px] overflow-y-auto space-y-3 rounded-xl border border-border bg-card/50 p-4 scrollbar-thin">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
@@ -133,6 +193,25 @@ export function Chat({ onImageUrl }: ChatProps) {
                   : "bg-border/40 text-foreground rounded-bl-md"
               }`}
             >
+              {m.role === "assistant" && m.images && m.images.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {m.images.map((url, idx) => (
+                    <a
+                      key={`${url}-${idx}`}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden rounded-lg border border-border bg-card"
+                    >
+                      <img
+                        src={url}
+                        alt={`Generated outfit ${idx + 1}`}
+                        className="h-24 w-auto max-w-[140px] object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {m.content}
               </p>
@@ -143,7 +222,6 @@ export function Chat({ onImageUrl }: ChatProps) {
           </div>
         ))}
 
-        {/* Streaming state */}
         {loading && (
           <div className="flex justify-start">
             <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-border/40 px-4 py-2.5">
@@ -163,7 +241,9 @@ export function Chat({ onImageUrl }: ChatProps) {
                 <div className="mt-2 max-h-20 overflow-y-auto scrollbar-thin">
                   <ul className="space-y-px text-[11px] font-mono text-muted/70">
                     {streamingLogs.slice(0, -1).map((log, i) => (
-                      <li key={i} className="truncate">{log}</li>
+                      <li key={i} className="truncate">
+                        {log}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -174,7 +254,6 @@ export function Chat({ onImageUrl }: ChatProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
         <input
           type="text"
