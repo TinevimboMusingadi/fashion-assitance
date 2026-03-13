@@ -1,19 +1,18 @@
 {
-  "weekKey": "2026-02-22",
+  "weekKey": "2026-03-08",
   "logs": [
     {
-      "date": "2026-02-23",
-      "outfitIds": [
-        "top-1",
-        "bottom-1"
-      ]
-    },
-    {
-      "date": "2026-02-27",
+      "date": "2026-03-12",
       "outfitIds": [
         "sweaters_PXL_20260222_205024224",
         "sweaters_PXL_20260222_205135354",
-        "baggy_jeans_PXL_20260222_205605385"
+        "baggy_jeans_PXL_20260222_205605385",
+        "sweaters_PXL_20260222_205241256",
+        "sweaters_PXL_20260222_205332577NIGHT",
+        "baggy_jeans_PXL_20260222_205706442",
+        "sweaters_PXL_20260222_205453424NIGHT",
+        "baggy_jeans_PXL_20260222_205850492",
+        "baggy_jeans_PXL_20260222_205927552"
       ]
     }
   ]
