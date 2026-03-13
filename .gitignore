@@ -1,7 +1,15 @@
-.gitignore
 promts.md
 *.env
+*.env.local
 node_modules/
 .next/
 .cursor
 data/generated/
+data/generated-images.json
+context_files/
+*.key.json
+infra/dripcheck-sa-key.json
+test.c
+test11.exe
+
+google_credential/
