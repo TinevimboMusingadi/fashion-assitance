@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/lib/firebase/auth-context";
 
 interface GalleryRecord {
   id: string;
   imageUrl: string;
+  filePath?: string;
+  storagePath?: string;
   createdAt: string;
   outfitItems: { name: string; category: string }[];
 }
@@ -16,12 +19,15 @@ interface OutfitGalleryProps {
 }
 
 export function OutfitGallery({ refreshKey, onSelect, activeUrl }: OutfitGalleryProps) {
+  const { token } = useAuth();
   const [records, setRecords] = useState<GalleryRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/generated-images");
+      const res = await fetch("/api/generated-images", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = (await res.json()) as GalleryRecord[];
         setRecords(Array.isArray(data) ? data.reverse() : []);
@@ -31,7 +37,7 @@ export function OutfitGallery({ refreshKey, onSelect, activeUrl }: OutfitGallery
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     load();
@@ -56,7 +62,11 @@ export function OutfitGallery({ refreshKey, onSelect, activeUrl }: OutfitGallery
   return (
     <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
       {records.map((rec) => {
-        const isActive = activeUrl === rec.imageUrl;
+        const storagePath = rec.storagePath ?? rec.filePath;
+        const src = storagePath
+          ? `/api/image?path=${encodeURIComponent(storagePath)}`
+          : rec.imageUrl;
+        const isActive = activeUrl === src;
         const date = new Date(rec.createdAt);
         const timeStr = date.toLocaleTimeString("en-US", {
           hour: "2-digit",
@@ -76,7 +86,7 @@ export function OutfitGallery({ refreshKey, onSelect, activeUrl }: OutfitGallery
           <button
             key={rec.id}
             type="button"
-            onClick={() => onSelect?.(rec.imageUrl)}
+            onClick={() => onSelect?.(src)}
             className={`group flex-shrink-0 transition-all ${
               isActive ? "scale-[1.02]" : "hover:scale-[1.02]"
             }`}
@@ -89,7 +99,7 @@ export function OutfitGallery({ refreshKey, onSelect, activeUrl }: OutfitGallery
               }`}
             >
               <img
-                src={rec.imageUrl}
+                src={src}
                 alt={`Outfit from ${dateStr}`}
                 className="h-full w-full object-cover"
               />
