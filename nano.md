@@ -864,7 +864,7 @@ response = client.models.generate_content(
             aspect_ratio="16:9",
             image_size="2K",aaa
             rr
-            
+
         )
     )
 )
@@ -915,6 +915,7 @@ Last updated 2026-02-26 UTC.
 
 Terms
 Privacy
+def __inti-   
 
 English
 The new page has loaded.
