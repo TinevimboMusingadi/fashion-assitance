@@ -1,179 +1,127 @@
-"use client";
+import Link from "next/link";
 
-import { useState, useEffect, useCallback } from "react";
-import { Chat } from "@/components/chat";
-import { OutfitGallery } from "@/components/outfit-gallery";
-
-function IndexButton() {
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-
-  const handleIndex = async () => {
-    setLoading(true);
-    setStatus(null);
-    try {
-      const res = await fetch("/api/index", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? "Failed");
-      setStatus(`Indexed ${(data as { indexed?: number }).indexed ?? 0} items`);
-    } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Index failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function LandingPage() {
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={handleIndex}
-        disabled={loading}
-        className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-silver transition-colors hover:border-silver/40 hover:text-foreground disabled:opacity-50"
-      >
-        {loading ? "Indexing..." : "Index Wardrobe"}
-      </button>
-      {status && (
-        <span className="text-muted text-xs">{status}</span>
-      )}
-    </div>
-  );
-}
-
-function Clock() {
-  const [time, setTime] = useState<string>("");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTime(now.toLocaleTimeString("en-US", { hour12: false }));
-    };
-    updateTime();
-    const id = setInterval(updateTime, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="text-muted/60 text-xs font-mono tabular-nums">
-      {time || "--:--:--"}
-    </div>
-  );
-}
-
-export default function Home() {
-  const [outfitImageUrls, setOutfitImageUrls] = useState<string[]>([]);
-  const [activePreview, setActivePreview] = useState<string | null>(null);
-  const [galleryKey, setGalleryKey] = useState(0);
-
-  const handleNewImage = useCallback((url: string) => {
-    setOutfitImageUrls((prev) => {
-      if (prev.includes(url)) return prev;
-      return [...prev, url];
-    });
-    setActivePreview(url);
-    setGalleryKey((k) => k + 1);
-  }, []);
-
-  const displayUrl = activePreview ?? outfitImageUrls[outfitImageUrls.length - 1] ?? null;
-
-  return (
-    <main className="flex h-screen flex-col overflow-hidden">
-      {/* Header */}
-      <header className="relative border-b border-border/60 px-6 py-3.5">
-        <div className="absolute inset-0 bg-gradient-to-r from-card via-background to-card opacity-60" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-foreground">
-                <path d="M20.38 3.46 16 2 12 5.5 8 2 3.62 3.46l.18 6.04L12 22l8.2-12.5z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h1 className="text-base font-semibold tracking-tight text-foreground">
-              Dripcheck
-            </h1>
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Nav */}
+      <nav className="flex items-center justify-between border-b border-border/40 px-6 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-foreground">
+              <path d="M20.38 3.46 16 2 12 5.5 8 2 3.62 3.46l.18 6.04L12 22l8.2-12.5z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-          <div className="flex items-center gap-4">
-            <IndexButton />
-            <Clock />
+          <span className="text-base font-semibold tracking-tight text-foreground">
+            Dripcheck
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="rounded-lg px-4 py-2 text-sm text-muted transition-colors hover:text-foreground"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+          >
+            Get started
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+        <div className="mx-auto max-w-2xl space-y-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-1.5 text-xs text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              AI-powered fashion assistant
+            </div>
+            <h1 className="text-5xl font-bold leading-tight tracking-tight text-foreground sm:text-6xl">
+              Your wardrobe,
+              <br />
+              <span className="bg-gradient-to-r from-silver via-foreground to-silver bg-clip-text text-transparent">
+                reimagined by AI
+              </span>
+            </h1>
+            <p className="mx-auto max-w-lg text-lg leading-relaxed text-muted">
+              Upload your clothes, and let AI plan your outfits based on
+              weather, style, and what you wore this week. See yourself
+              wearing the outfit before you put it on.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href="/signup"
+              className="rounded-xl bg-foreground px-8 py-3.5 text-sm font-semibold text-background transition-all hover:bg-foreground/90 active:scale-[0.98]"
+            >
+              Get started free
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-xl border border-border px-8 py-3.5 text-sm font-medium text-foreground transition-all hover:bg-card active:scale-[0.98]"
+            >
+              Sign in
+            </Link>
+          </div>
+
+          {/* Features */}
+          <div className="grid gap-4 pt-12 sm:grid-cols-3">
+            {[
+              {
+                title: "Index your wardrobe",
+                desc: "Upload photos of your clothes and AI categorizes them automatically",
+                icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z",
+              },
+              {
+                title: "AI outfit planning",
+                desc: "Get daily outfit suggestions based on weather and your style history",
+                icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
+              },
+              {
+                title: "Virtual try-on",
+                desc: "See yourself wearing the suggested outfit before getting dressed",
+                icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
+              },
+            ].map((feature) => (
+              <div
+                key={feature.title}
+                className="rounded-xl border border-border/60 bg-card/50 p-5 text-left"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mb-3 text-silver"
+                >
+                  <path d={feature.icon} />
+                </svg>
+                <h3 className="mb-1 text-sm font-medium text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="text-xs leading-relaxed text-muted">
+                  {feature.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
-      </header>
+      </main>
 
-      {/* Body */}
-      <div className="flex flex-1 gap-0 min-h-0 overflow-hidden">
-        {/* Chat panel */}
-        <section className="flex flex-1 flex-col min-w-0 border-r border-border/40 p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-green-500/80" />
-            <h2 className="text-xs font-medium uppercase tracking-wider text-muted">Chat</h2>
-          </div>
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <Chat onImageUrl={handleNewImage} />
-          </div>
-        </section>
-
-        {/* Right panel */}
-        <section className="flex w-[340px] flex-shrink-0 flex-col gap-5 overflow-y-auto p-5 scrollbar-thin">
-          {/* Outfit preview */}
-          <div>
-            <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
-              Outfit Preview
-            </h2>
-
-            {outfitImageUrls.length > 1 && (
-              <div className="mb-3 flex gap-2">
-                {outfitImageUrls.map((url, i) => (
-                  <button
-                    key={url}
-                    type="button"
-                    onClick={() => setActivePreview(url)}
-                    className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                      displayUrl === url
-                        ? "bg-foreground/10 text-foreground"
-                        : "text-muted hover:text-foreground"
-                    }`}
-                  >
-                    Outfit {i + 1}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-border bg-card">
-              {displayUrl ? (
-                <img
-                  src={displayUrl}
-                  alt="Generated outfit"
-                  className="h-full w-full rounded-xl object-cover transition-opacity"
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-2 px-6 text-center">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-border">
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="m21 15-5-5L5 21" />
-                  </svg>
-                  <p className="text-muted text-xs">
-                    Generated outfit images will appear here
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Gallery */}
-          <div>
-            <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
-              Past Outfits
-            </h2>
-            <OutfitGallery
-              refreshKey={galleryKey}
-              onSelect={(url) => setActivePreview(url)}
-              activeUrl={displayUrl}
-            />
-          </div>
-        </section>
-      </div>
-    </main>
+      {/* Footer */}
+      <footer className="border-t border-border/40 px-6 py-4 text-center">
+        <p className="text-xs text-muted/60">
+          Dripcheck &middot; Built with Next.js, Gemini AI, and Firebase
+        </p>
+      </footer>
+    </div>
   );
 }
