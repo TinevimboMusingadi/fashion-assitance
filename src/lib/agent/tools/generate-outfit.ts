@@ -1,61 +1,14 @@
 /**
  * Generate Full Outfit Tool - Renders user wearing the selected outfit.
- * Uses Nano Banana (Gemini 3.1 Flash Image) for virtual try-on.
+ * Uses Gemini 3.1 Flash Image Preview for virtual try-on.
+ * Stores generated images in GCS and metadata in Firestore.
  */
 
-import { readFile, writeFile, mkdir, readdir } from "fs/promises";
-import { join, resolve } from "path";
 import { GoogleGenAI } from "@google/genai";
 import type { ClothingMetadata } from "@/lib/types";
 import { appendGeneratedImage } from "@/lib/memory/generated-images-store";
-
-const DATA_DIR = join(process.cwd(), "data");
-const GENERATED_DIR = join(DATA_DIR, "generated");
-const PERSON_PHOTOS_PATH = join(DATA_DIR, "person-photos.json");
-
-function parseImagePath(urlOrPath: string): string | null {
-  if (!urlOrPath?.trim()) return null;
-  if (urlOrPath.startsWith("/api/image?path=")) {
-    const match = urlOrPath.match(/path=([^&]+)/);
-    return match ? decodeURIComponent(match[1]) : null;
-  }
-  return urlOrPath.replace(/^\/+/, "");
-}
-
-function pathToFileSystem(pathParam: string): string {
-  const clean = pathParam.replace(/^data\/?/, "");
-  return resolve(join(DATA_DIR, clean));
-}
-
-async function getDefaultPersonImage(): Promise<string> {
-  try {
-    const raw = await readFile(PERSON_PHOTOS_PATH, "utf-8");
-    const photos = JSON.parse(raw) as { path: string }[];
-    if (Array.isArray(photos) && photos.length > 0) {
-      const first = photos[0];
-      const fsPath = resolve(join(DATA_DIR, first.path));
-      return fsPath;
-    }
-  } catch {
-    // Fallback to directory scan
-  }
-  const meDir = join(DATA_DIR, "me");
-  try {
-    const files = await readdir(meDir);
-    const image = files.find((f) => /\.(jpg|jpeg|png|webp)$/i.test(f));
-    if (image) return join(meDir, image);
-  } catch {
-    // No person photos
-  }
-  return "";
-}
-
-async function loadImageAsBase64(filePath: string): Promise<{ data: string; mime: string }> {
-  const buffer = await readFile(filePath);
-  const ext = filePath.toLowerCase().slice(filePath.lastIndexOf("."));
-  const mime = [".jpg", ".jpeg"].includes(ext) ? "image/jpeg" : "image/png";
-  return { data: buffer.toString("base64"), mime };
-}
+import { uploadFile, downloadFile } from "@/lib/storage/gcs-client";
+import { getUserPersonPhotos } from "@/lib/indexing/engine";
 
 export type LogCallback = (message: string) => void;
 
@@ -74,25 +27,61 @@ export interface GenerateOutfitResult {
   imageUrls: string[];
   success: boolean;
   message?: string;
-  /** @deprecated Use imageUrls[0] instead. Kept for backward compat. */
+  /** @deprecated Use imageUrls[0] instead. */
   imageUrl: string;
+}
+
+async function loadImageAsBase64FromUrl(
+  url: string,
+): Promise<{ data: string; mime: string }> {
+  const resp = await fetch(url);
+  const buffer = Buffer.from(await resp.arrayBuffer());
+  const ct = resp.headers.get("content-type") ?? "image/png";
+  return { data: buffer.toString("base64"), mime: ct };
+}
+
+async function loadImageFromStorageOrUrl(
+  imageUrl: string,
+  storagePath?: string,
+): Promise<{ data: string; mime: string }> {
+  if (storagePath) {
+    try {
+      const bucketType = storagePath.includes("/wardrobe/")
+        ? "wardrobes" as const
+        : storagePath.includes("/generated/")
+          ? "generated" as const
+          : "profiles" as const;
+      const buffer = await downloadFile(bucketType, storagePath);
+      const ext = storagePath.toLowerCase().slice(storagePath.lastIndexOf("."));
+      const mime = [".jpg", ".jpeg"].includes(ext)
+        ? "image/jpeg"
+        : "image/png";
+      return { data: buffer.toString("base64"), mime };
+    } catch {
+      // Fall through to URL fetch
+    }
+  }
+  return loadImageAsBase64FromUrl(imageUrl);
 }
 
 async function generateSingleOutfit(
   ai: InstanceType<typeof GoogleGenAI>,
   personImg: { data: string; mime: string },
-  personPath: string,
+  personPhotoRef: string,
   outfitItems: ClothingMetadata[],
   label: string,
+  uid: string,
   sendLog: LogCallback,
 ): Promise<{ imageUrl: string; success: boolean; message?: string }> {
   const outfitImages: { data: string; mime: string; name: string }[] = [];
   for (const item of outfitItems) {
-    const p = parseImagePath(item.imageUrl);
-    if (p) {
-      const fp = pathToFileSystem(p);
-      sendLog(`  [IMG] ${item.name} (${item.category}) -> ${fp}`);
-      outfitImages.push({ ...(await loadImageAsBase64(fp)), name: item.name });
+    if (item.imageUrl) {
+      sendLog(`  [IMG] ${item.name} (${item.category})`);
+      const img = await loadImageFromStorageOrUrl(
+        item.imageUrl,
+        item.storagePath,
+      );
+      outfitImages.push({ ...img, name: item.name });
     }
   }
 
@@ -112,7 +101,9 @@ async function generateSingleOutfit(
   ].join(" ");
 
   sendLog(`  [PROMPT] ${prompt.slice(0, 120)}...`);
-  sendLog(`  [MODEL] Sending 1 person photo + ${outfitImages.length} clothing images`);
+  sendLog(
+    `  [MODEL] Sending 1 person photo + ${outfitImages.length} clothing images`,
+  );
 
   const contents: object[] = [
     { text: prompt },
@@ -131,12 +122,18 @@ async function generateSingleOutfit(
     },
   });
 
-  const parts = (response as { candidates?: { content?: { parts?: unknown[] } }[] })
-    ?.candidates?.[0]?.content?.parts ?? [];
+  const parts =
+    (
+      response as {
+        candidates?: { content?: { parts?: unknown[] } }[];
+      }
+    )?.candidates?.[0]?.content?.parts ?? [];
   let imageBase64: string | null = null;
 
   for (const part of parts) {
-    const p = part as { inlineData?: { data?: string; mimeType?: string } };
+    const p = part as {
+      inlineData?: { data?: string; mimeType?: string };
+    };
     if (p?.inlineData?.data) {
       imageBase64 = p.inlineData.data;
       break;
@@ -148,36 +145,47 @@ async function generateSingleOutfit(
     return { imageUrl: "", success: false, message: "No image generated" };
   }
 
-  await mkdir(GENERATED_DIR, { recursive: true });
   const timestamp = Date.now();
   const filename = `outfit-${timestamp}.png`;
-  const outPath = join(GENERATED_DIR, filename);
-  await writeFile(outPath, Buffer.from(imageBase64, "base64"));
-  sendLog(`  [SAVED] ${outPath}`);
+  const buffer = Buffer.from(imageBase64, "base64");
 
-  const relativePath = `generated/${filename}`;
-  const imageUrl = `/api/image?path=${encodeURIComponent(relativePath)}`;
+  const { storagePath, publicUrl } = await uploadFile(
+    uid,
+    "generated",
+    filename,
+    buffer,
+    "image/png",
+  );
+  sendLog(`  [SAVED] ${storagePath}`);
 
-  await appendGeneratedImage({
+  await appendGeneratedImage(uid, {
     id: `gen-${timestamp}`,
-    imageUrl,
-    filePath: relativePath,
+    imageUrl: publicUrl,
+    filePath: storagePath,
+    storagePath,
     createdAt: new Date().toISOString(),
     outfitItems: outfitItems.map((item) => ({
       name: item.name,
       category: item.category,
       imageUrl: item.imageUrl,
     })),
-    personPhoto: personPath,
+    personPhoto: personPhotoRef,
     prompt,
   });
-  sendLog(`  [STORED] Record saved to generated-images.json`);
+  sendLog(`  [STORED] Record saved to Firestore`);
 
-  return { imageUrl, success: true, message: `Generated: ${label}` };
+  const viewUrl = `/api/image?path=${encodeURIComponent(storagePath)}`;
+
+  return {
+    imageUrl: viewUrl,
+    success: true,
+    message: `Generated: ${label}`,
+  };
 }
 
 export async function generateOutfitImage(
   input: GenerateOutfitInput,
+  uid: string,
   sendLog: LogCallback = () => {},
 ): Promise<GenerateOutfitResult> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -208,25 +216,51 @@ export async function generateOutfitImage(
     };
   }
 
-  let personPath = input.basePhotoUrl
-    ? pathToFileSystem(parseImagePath(input.basePhotoUrl) ?? "")
-    : await getDefaultPersonImage();
+  // Resolve base photo:
+  // 1) Prefer explicit input.basePhotoUrl (could be an external URL)
+  // 2) Otherwise fall back to the first stored person photo for this user.
+  let basePhotoUrl = input.basePhotoUrl;
+  let baseStoragePath: string | undefined;
+  if (!basePhotoUrl) {
+    const photos = await getUserPersonPhotos(uid);
+    if (photos.length > 0) {
+      const first = photos[0];
+      baseStoragePath = first.path;
+      basePhotoUrl = first.imageUrl;
+      sendLog(
+        `[GENERATE] Using default base photo from profile: ${first.path ?? first.imageUrl}`,
+      );
+    }
+  }
 
-  if (!personPath) {
+  const personPhotoRef = baseStoragePath ?? basePhotoUrl ?? "";
+  let personImg: { data: string; mime: string };
+  if (basePhotoUrl || baseStoragePath) {
+    sendLog(
+      `[GENERATE] Person photo: ${baseStoragePath ?? basePhotoUrl ?? "unknown"}`,
+    );
+    personImg = await loadImageFromStorageOrUrl(
+      basePhotoUrl ?? "",
+      baseStoragePath,
+    );
+  } else {
     return {
       imageUrl: "",
       imageUrls: [],
       success: false,
-      message: "No person/base photo found. Add images to data/me/",
+      message:
+        "No person/base photo found. Please upload or set a base photo in your wardrobe.",
     };
   }
 
-  sendLog(`[GENERATE] Person photo: ${personPath}`);
-  sendLog(`[GENERATE] Tops: ${validTops.map((t) => t.name).join(", ") || "none"}`);
-  sendLog(`[GENERATE] Shared items: ${sharedItems.map((i) => `${i.name} (${i.category})`).join(", ") || "none"}`);
+  sendLog(
+    `[GENERATE] Tops: ${validTops.map((t) => t.name).join(", ") || "none"}`,
+  );
+  sendLog(
+    `[GENERATE] Shared items: ${sharedItems.map((i) => `${i.name} (${i.category})`).join(", ") || "none"}`,
+  );
 
   try {
-    const personImg = await loadImageAsBase64(personPath);
     const ai = new GoogleGenAI({ apiKey });
     const imageUrls: string[] = [];
 
@@ -234,21 +268,41 @@ export async function generateOutfitImage(
       sendLog("[GENERATE] Single outfit - 1 image generation call");
       const allItems = [...validTops, ...sharedItems];
       const res = await generateSingleOutfit(
-        ai, personImg, personPath, allItems, "Outfit", sendLog,
+        ai,
+        personImg,
+        personPhotoRef,
+        allItems,
+        "Outfit",
+        uid,
+        sendLog,
       );
-      if (res.success) imageUrls.push(res.imageUrl);
-      else {
-        return { imageUrl: "", imageUrls: [], success: false, message: res.message };
+      if (res.success) {
+        imageUrls.push(res.imageUrl);
+      } else {
+        return {
+          imageUrl: "",
+          imageUrls: [],
+          success: false,
+          message: res.message,
+        };
       }
     } else {
-      sendLog(`[GENERATE] ${validTops.length} tops found -> generating ${validTops.length} separate outfit images`);
+      sendLog(
+        `[GENERATE] ${validTops.length} tops found -> generating ${validTops.length} separate outfit images`,
+      );
       for (let i = 0; i < validTops.length; i++) {
         const top = validTops[i];
         const label = `Outfit ${i + 1}: ${top.name}`;
         sendLog(`[GENERATE] --- ${label} ---`);
         const items = [top, ...sharedItems];
         const res = await generateSingleOutfit(
-          ai, personImg, personPath, items, label, sendLog,
+          ai,
+          personImg,
+          personPhotoRef,
+          items,
+          label,
+          uid,
+          sendLog,
         );
         if (res.success) imageUrls.push(res.imageUrl);
         else sendLog(`  [WARN] ${label} generation failed: ${res.message}`);
