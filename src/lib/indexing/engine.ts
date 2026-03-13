@@ -1,95 +1,16 @@
 /**
- * Indexing engine - scans data/ folder and uses Gemini to classify each garment.
+ * Indexing engine - uses Gemini Vision to classify garments.
+ * Stores metadata in Firestore and images in GCS.
  */
 
-import { readdir, readFile, writeFile, mkdir } from "fs/promises";
-import { join, resolve, extname, basename, relative } from "path";
 import { GoogleGenAI } from "@google/genai";
+import { db } from "@/lib/firebase/admin";
+import { uploadFile } from "@/lib/storage/gcs-client";
 import type {
   ClothingMetadata,
   ClothingCategory,
   PersonPhotoMetadata,
 } from "@/lib/types";
-
-const DATA_DIR = join(process.cwd(), "data");
-const CATALOG_PATH = join(DATA_DIR, "catalog.json");
-
-const FOLDER_TO_CATEGORY: Record<string, ClothingCategory> = {
-  "baggy jeans": "bottom",
-  "bottom and kaggle": "bottom",
-  shorts: "bottom",
-  sweaters: "top",
-  sneakers: "shoes",
-  slides: "shoes",
-  socks: "socks",
-};
-
-const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
-const SKIP_FILES = new Set(["catalog.json", "weekly-log.json", "person-photos.json"]);
-const PERSON_PHOTOS_PATH = join(DATA_DIR, "person-photos.json");
-
-function isImageFile(name: string): boolean {
-  return IMAGE_EXTS.has(extname(name).toLowerCase());
-}
-
-function pathToId(relativePath: string): string {
-  return relativePath
-    .replace(/[/\\]/g, "_")
-    .replace(/\s+/g, "_")
-    .replace(/\.[^.]+$/, "")
-    .replace(/[^a-zA-Z0-9_-]/g, "");
-}
-
-async function listPersonPhotos(): Promise<PersonPhotoMetadata[]> {
-  const meDir = join(DATA_DIR, "me");
-  const result: PersonPhotoMetadata[] = [];
-  try {
-    const files = await readdir(meDir);
-    for (const file of files) {
-      if (!isImageFile(file)) continue;
-      const relativePath = `me/${file}`.replace(/\\/g, "/");
-      const id = pathToId(relativePath);
-      result.push({
-        id,
-        path: relativePath,
-        imageUrl: `/api/image?path=${encodeURIComponent(relativePath)}`,
-      });
-    }
-  } catch {
-    // data/me/ may not exist
-  }
-  return result;
-}
-
-async function listClothingImages(): Promise<{ path: string; category: ClothingCategory }[]> {
-  const result: { path: string; category: ClothingCategory }[] = [];
-  const entries = await readdir(DATA_DIR, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (entry.name.startsWith(".") || SKIP_FILES.has(entry.name)) continue;
-    if (!entry.isDirectory()) continue;
-
-    const folderName = entry.name.toLowerCase();
-    if (folderName === "me") continue;
-
-    const category = FOLDER_TO_CATEGORY[folderName];
-    if (!category) continue;
-
-    const folderPath = join(DATA_DIR, entry.name);
-    const files = await readdir(folderPath);
-
-    for (const file of files) {
-      if (!isImageFile(file)) continue;
-      const fullPath = resolve(join(folderPath, file));
-      result.push({
-        path: fullPath,
-        category,
-      });
-    }
-  }
-
-  return result;
-}
 
 interface GeminiClassification {
   name: string;
@@ -101,17 +22,15 @@ interface GeminiClassification {
 }
 
 async function classifyWithGemini(
-  imagePath: string,
+  imageBuffer: Buffer,
+  mimeType: string,
   category: ClothingCategory,
-  apiKey: string
+  apiKey: string,
 ): Promise<GeminiClassification> {
-  const buffer = await readFile(imagePath);
-  const base64 = buffer.toString("base64");
-  const ext = extname(imagePath).toLowerCase();
-  const mime = ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : "image/png";
-
+  const base64 = imageBuffer.toString("base64");
   const ai = new GoogleGenAI({ apiKey });
-  const prompt = `Look at this clothing image. The folder suggests category: ${category}.
+
+  const prompt = `Look at this clothing image. The category is: ${category}.
 Return ONLY valid JSON, no other text:
 {
   "name": "descriptive name of the garment",
@@ -126,19 +45,14 @@ Return ONLY valid JSON, no other text:
     model: "gemini-2.0-flash",
     contents: [
       { text: prompt },
-      {
-        inlineData: {
-          mimeType: mime,
-          data: base64,
-        },
-      },
+      { inlineData: { mimeType, data: base64 } },
     ],
   });
 
   const text = (response as { text?: string }).text;
   if (!text) {
     return {
-      name: basename(imagePath, extname(imagePath)),
+      name: "Unknown garment",
       color: "unknown",
       colors: [],
       occasion: ["casual"],
@@ -147,12 +61,15 @@ Return ONLY valid JSON, no other text:
     };
   }
 
-  const cleaned = text.replace(/```json\s?/g, "").replace(/```\s?/g, "").trim();
+  const cleaned = text
+    .replace(/```json\s?/g, "")
+    .replace(/```\s?/g, "")
+    .trim();
   try {
     return JSON.parse(cleaned) as GeminiClassification;
   } catch {
     return {
-      name: basename(imagePath, extname(imagePath)),
+      name: "Unknown garment",
       color: "unknown",
       colors: [],
       occasion: ["casual"],
@@ -162,41 +79,180 @@ Return ONLY valid JSON, no other text:
   }
 }
 
-export async function indexClothes(apiKey: string): Promise<ClothingMetadata[]> {
-  const [clothingImages, personPhotos] = await Promise.all([
-    listClothingImages(),
-    listPersonPhotos(),
-  ]);
-  await mkdir(DATA_DIR, { recursive: true });
-  await writeFile(PERSON_PHOTOS_PATH, JSON.stringify(personPhotos, null, 2));
+export interface IndexableItem {
+  filename: string;
+  buffer: Buffer;
+  mimeType: string;
+  category: ClothingCategory;
+}
 
+export interface IndexablePersonPhoto {
+  filename: string;
+  buffer: Buffer;
+  mimeType: string;
+}
+
+export async function indexClothesFromUploads(
+  uid: string,
+  items: IndexableItem[],
+  apiKey: string,
+): Promise<ClothingMetadata[]> {
+  const wardrobeCol = db
+    .collection("users")
+    .doc(uid)
+    .collection("wardrobe");
   const catalog: ClothingMetadata[] = [];
   const now = new Date().toISOString();
 
-  for (let i = 0; i < clothingImages.length; i++) {
-    const { path: fullPath, category } = clothingImages[i];
-    const relativePath = relative(DATA_DIR, fullPath).replace(/\\/g, "/");
-    const id = pathToId(relativePath);
+  function inferSubCategory(
+    category: ClothingCategory,
+    name: string,
+    style: string[],
+    tags?: string[],
+  ): string | undefined {
+    const haystack = [
+      name.toLowerCase(),
+      ...style.map((s) => s.toLowerCase()),
+      ...(tags ?? []).map((t) => t.toLowerCase()),
+    ].join(" ");
 
-    const classification = await classifyWithGemini(fullPath, category, apiKey);
+    if (category === "bottom") {
+      if (haystack.match(/\b(jeans?|denim)\b/)) return "jeans";
+      if (haystack.match(/\b(cargo|utility)\b/)) return "cargo pants";
+      if (haystack.match(/\b(chinos?|khakis?)\b/)) return "chinos";
+      if (haystack.match(/\b(shorts?)\b/)) return "shorts";
+      if (haystack.match(/\b(track|jogger|sweatpants?)\b/)) {
+        return "track pants";
+      }
+      if (haystack.match(/\b(leggings?)\b/)) return "leggings";
+      return "other bottoms";
+    }
 
-    catalog.push({
-      id,
-      name: classification.name,
-      category,
-      color: classification.color ?? "unknown",
-      colors: Array.isArray(classification.colors) ? classification.colors : [],
-      occasion: (classification.occasion ?? []).filter((o) =>
-        ["casual", "formal", "business", "athletic", "party", "beach", "evening"].includes(o)
-      ) as ClothingMetadata["occasion"],
-      style: Array.isArray(classification.style) ? classification.style : [],
-      imageUrl: `/api/image?path=${encodeURIComponent(relativePath)}`,
-      createdAt: now,
-      tags: classification.tags,
-    });
+    if (category === "top" || category === "outerwear") {
+      if (haystack.match(/\b(t[- ]?shirt|tee|graphic tee)\b/)) {
+        return "t-shirt";
+      }
+      if (haystack.match(/\b(tank|singlet|camisole)\b/)) {
+        return "tank top";
+      }
+      if (haystack.match(/\b(hoodie|hooded)\b/)) return "hoodie";
+      if (haystack.match(/\b(sweater|jumper|knit)\b/)) return "sweater";
+      if (haystack.match(/\b(cardigan)\b/)) return "cardigan";
+      if (haystack.match(/\b(shirt|button[- ]?down|oxford)\b/)) {
+        return "shirt";
+      }
+      if (haystack.match(/\b(blouse)\b/)) return "blouse";
+      return "other tops";
+    }
+
+    return undefined;
   }
 
-  await mkdir(DATA_DIR, { recursive: true });
-  await writeFile(CATALOG_PATH, JSON.stringify(catalog, null, 2));
+  for (const item of items) {
+    const classification = await classifyWithGemini(
+      item.buffer,
+      item.mimeType,
+      item.category,
+      apiKey,
+    );
+
+    const { storagePath, publicUrl } = await uploadFile(
+      uid,
+      "wardrobes",
+      item.filename,
+      item.buffer,
+      item.mimeType,
+    );
+
+    const id = item.filename
+      .replace(/\.[^.]+$/, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+    const meta: ClothingMetadata = {
+      id,
+      name: classification.name,
+      category: item.category,
+      subCategory: inferSubCategory(
+        item.category,
+        classification.name,
+        Array.isArray(classification.style) ? classification.style : [],
+        classification.tags,
+      ),
+      color: classification.color ?? "unknown",
+      colors: Array.isArray(classification.colors)
+        ? classification.colors
+        : [],
+      occasion: (classification.occasion ?? []).filter((o) =>
+        [
+          "casual",
+          "formal",
+          "business",
+          "athletic",
+          "party",
+          "beach",
+          "evening",
+        ].includes(o),
+      ) as ClothingMetadata["occasion"],
+      style: Array.isArray(classification.style)
+        ? classification.style
+        : [],
+      imageUrl: publicUrl,
+      storagePath,
+      createdAt: now,
+      tags: classification.tags,
+    };
+
+    await wardrobeCol.doc(id).set(meta);
+    catalog.push(meta);
+  }
+
   return catalog;
+}
+
+export async function indexPersonPhotos(
+  uid: string,
+  photos: IndexablePersonPhoto[],
+): Promise<PersonPhotoMetadata[]> {
+  const result: PersonPhotoMetadata[] = [];
+  for (const photo of photos) {
+    const { storagePath, publicUrl } = await uploadFile(
+      uid,
+      "profiles",
+      photo.filename,
+      photo.buffer,
+      photo.mimeType,
+    );
+    const id = photo.filename
+      .replace(/\.[^.]+$/, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_");
+    result.push({ id, path: storagePath, imageUrl: publicUrl });
+  }
+
+  await db
+    .collection("users")
+    .doc(uid)
+    .set({ personPhotos: result }, { merge: true });
+
+  return result;
+}
+
+export async function getUserWardrobe(
+  uid: string,
+): Promise<ClothingMetadata[]> {
+  const snap = await db
+    .collection("users")
+    .doc(uid)
+    .collection("wardrobe")
+    .get();
+  return snap.docs.map(
+    (d) => ({ id: d.id, ...d.data() }) as ClothingMetadata,
+  );
+}
+
+export async function getUserPersonPhotos(
+  uid: string,
+): Promise<PersonPhotoMetadata[]> {
+  const userDoc = await db.collection("users").doc(uid).get();
+  const data = userDoc.data();
+  return Array.isArray(data?.personPhotos) ? data.personPhotos : [];
 }
