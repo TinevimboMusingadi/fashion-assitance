@@ -1,38 +1,37 @@
 /**
  * Server-side store for generated outfit images.
- * Persists a log of every image the generator produces, including
- * which clothing items and person photo were used.
+ * Reads/writes Firestore: users/{uid}/generatedImages/{genId}
  */
 
 import type { GeneratedImageRecord } from "@/lib/types";
-import { readFile, writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { db } from "@/lib/firebase/admin";
 
-const DATA_DIR = join(process.cwd(), "data");
-const STORE_FILE = join(DATA_DIR, "generated-images.json");
+function userGenCol(uid: string) {
+  return db.collection("users").doc(uid).collection("generatedImages");
+}
 
-export async function getGeneratedImages(): Promise<GeneratedImageRecord[]> {
-  try {
-    const raw = await readFile(STORE_FILE, "utf-8");
-    const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+export async function getGeneratedImages(
+  uid: string,
+): Promise<GeneratedImageRecord[]> {
+  const snap = await userGenCol(uid)
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as GeneratedImageRecord);
 }
 
 export async function appendGeneratedImage(
+  uid: string,
   record: GeneratedImageRecord,
 ): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
-  const records = await getGeneratedImages();
-  records.push(record);
-  await writeFile(STORE_FILE, JSON.stringify(records, null, 2));
+  await userGenCol(uid).doc(record.id).set(record);
 }
 
 export async function getGeneratedImageById(
+  uid: string,
   id: string,
 ): Promise<GeneratedImageRecord | null> {
-  const records = await getGeneratedImages();
-  return records.find((r) => r.id === id) ?? null;
+  const snap = await userGenCol(uid).doc(id).get();
+  if (!snap.exists) return null;
+  return { id: snap.id, ...snap.data() } as GeneratedImageRecord;
 }

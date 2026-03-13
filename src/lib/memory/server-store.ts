@@ -1,19 +1,10 @@
 /**
  * Server-side weekly outfit memory store.
- * Uses JSON file in data/ directory. For production, replace with Firestore.
+ * Reads/writes Firestore: users/{uid}/weeklyLog/{weekKey}
  */
 
 import type { WeeklyOutfitLog } from "@/lib/types";
-import { readFile, writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-
-const DATA_DIR = join(process.cwd(), "data");
-const LOG_FILE = join(DATA_DIR, "weekly-log.json");
-
-interface StoredLog {
-  weekKey: string;
-  logs: WeeklyOutfitLog[];
-}
+import { db } from "@/lib/firebase/admin";
 
 function getWeekKey(date: Date): string {
   const d = new Date(date);
@@ -23,44 +14,40 @@ function getWeekKey(date: Date): string {
   return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
 }
 
-function isNewWeek(current: Date, storedWeekKey: string): boolean {
-  return getWeekKey(current) !== storedWeekKey;
-}
-
-export async function getWeeklyLog(): Promise<WeeklyOutfitLog[]> {
-  try {
-    const raw = await readFile(LOG_FILE, "utf-8");
-    const data = JSON.parse(raw) as StoredLog;
-    if (isNewWeek(new Date(), data.weekKey)) {
-      return [];
-    }
-    return data.logs;
-  } catch {
-    return [];
-  }
+export async function getWeeklyLog(uid: string): Promise<WeeklyOutfitLog[]> {
+  const weekKey = getWeekKey(new Date());
+  const docRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("weeklyLog")
+    .doc(weekKey);
+  const snap = await docRef.get();
+  if (!snap.exists) return [];
+  const data = snap.data();
+  return Array.isArray(data?.logs) ? data.logs : [];
 }
 
 export async function appendToWeeklyLog(
+  uid: string,
   date: string,
-  outfitIds: string[]
+  outfitIds: string[],
 ): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
-  const now = new Date();
-  const weekKey = getWeekKey(now);
+  const weekKey = getWeekKey(new Date());
+  const docRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("weeklyLog")
+    .doc(weekKey);
 
+  const snap = await docRef.get();
   let logs: WeeklyOutfitLog[] = [];
-  try {
-    const raw = await readFile(LOG_FILE, "utf-8");
-    const data = JSON.parse(raw) as StoredLog;
-    if (data.weekKey === weekKey) {
-      logs = data.logs;
-    }
-  } catch {
-    logs = [];
+  if (snap.exists) {
+    const data = snap.data();
+    logs = Array.isArray(data?.logs) ? data.logs : [];
   }
 
   const existing = logs.find((l) => l.date === date);
-  const ids = [...new Set([...(existing?.outfitIds ?? []), ...outfitIds])];
+  const ids = Array.from(new Set([...(existing?.outfitIds ?? []), ...outfitIds]));
   if (existing) {
     existing.outfitIds = ids;
   } else {
@@ -68,19 +55,23 @@ export async function appendToWeeklyLog(
   }
   logs.sort((a, b) => a.date.localeCompare(b.date));
 
-  await writeFile(LOG_FILE, JSON.stringify({ weekKey, logs }, null, 2));
+  await docRef.set({ weekKey, logs }, { merge: true });
 }
 
-export async function resetWeeklyLogIfNewWeek(): Promise<boolean> {
-  try {
-    const raw = await readFile(LOG_FILE, "utf-8");
-    const data = JSON.parse(raw) as StoredLog;
-    if (isNewWeek(new Date(), data.weekKey)) {
-      await writeFile(LOG_FILE, JSON.stringify({ weekKey: getWeekKey(new Date()), logs: [] }));
-      return true;
-    }
-  } catch {
-    return false;
+export async function resetWeeklyLogIfNewWeek(uid: string): Promise<boolean> {
+  const weekKey = getWeekKey(new Date());
+  const docRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("weeklyLog")
+    .doc(weekKey);
+
+  const snap = await docRef.get();
+  if (!snap.exists) return false;
+  const data = snap.data();
+  if (data?.weekKey !== weekKey) {
+    await docRef.set({ weekKey, logs: [] });
+    return true;
   }
   return false;
 }

@@ -65,7 +65,7 @@ export function createLocalMemoryStore(): MemoryStore {
           }
         }
         const existing = logs.find((l) => l.date === date);
-        const ids = [...new Set([...(existing?.outfitIds ?? []), ...outfitIds])];
+        const ids = Array.from(new Set([...(existing?.outfitIds ?? []), ...outfitIds]));
         if (existing) {
           existing.outfitIds = ids;
         } else {
