@@ -184,42 +184,6 @@ export function Chat({ onImageUrl, sessionId }: ChatProps) {
         {messages.map((m, i) => {
           const isOutfitReply =
             m.role === "assistant" && m.images && m.images.length > 0;
-          const bubble = (
-            <div
-              className={`max-w-[92%] rounded-2xl px-3 py-2 sm:max-w-[88%] sm:px-4 sm:py-2.5 ${
-                m.role === "user"
-                  ? "bg-accent text-foreground rounded-br-md"
-                  : "bg-border/40 text-foreground rounded-bl-md"
-              }`}
-            >
-              {isOutfitReply && (
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {m.images!.map((url, idx) => (
-                    <a
-                      key={`${url}-${idx}`}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block overflow-hidden rounded-lg border border-border bg-card transition-transform duration-150 hover:scale-[1.03]"
-                    >
-                      <img
-                        src={url}
-                        alt={`Generated outfit ${idx + 1}`}
-                        className="h-20 w-auto max-w-[120px] object-cover sm:h-24 sm:max-w-[140px]"
-                      />
-                    </a>
-                  ))}
-                </div>
-              )}
-              <p className="whitespace-pre-wrap text-xs leading-relaxed sm:text-sm">
-                {m.content}
-              </p>
-              {m.role === "assistant" && m.logs && m.logs.length > 0 && (
-                <AgentLogBlock logs={m.logs} generatedImages={m.images} />
-              )}
-            </div>
-          );
-
           return (
             <div
               key={i}
@@ -227,13 +191,39 @@ export function Chat({ onImageUrl, sessionId }: ChatProps) {
                 m.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
-              {isOutfitReply ? (
-                <div className="max-w-[92%] rounded-2xl bg-gradient-to-r from-silver/30 via-foreground/20 to-silver/30 p-[1.5px] shadow-[0_0_18px_rgba(148,163,184,0.45)] sm:max-w-[88%]">
-                  {bubble}
-                </div>
-              ) : (
-                bubble
-              )}
+              <div
+                className={`max-w-[92%] rounded-2xl px-3 py-2 sm:max-w-[88%] sm:px-4 sm:py-2.5 ${
+                  m.role === "user"
+                    ? "bg-accent text-foreground rounded-br-md"
+                    : "bg-border/40 text-foreground rounded-bl-md"
+                }`}
+              >
+                {isOutfitReply && (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {m.images!.map((url, idx) => (
+                      <a
+                        key={`${url}-${idx}`}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block overflow-hidden rounded-lg border border-border bg-card transition-transform duration-150 hover:scale-[1.03]"
+                      >
+                        <img
+                          src={url}
+                          alt={`Generated outfit ${idx + 1}`}
+                          className="h-20 w-auto max-w-[120px] object-cover sm:h-24 sm:max-w-[140px]"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <p className="whitespace-pre-wrap text-xs leading-relaxed sm:text-sm">
+                  {m.content}
+                </p>
+                {m.role === "assistant" && m.logs && m.logs.length > 0 && (
+                  <AgentLogBlock logs={m.logs} generatedImages={m.images} />
+                )}
+              </div>
             </div>
           );
         })}

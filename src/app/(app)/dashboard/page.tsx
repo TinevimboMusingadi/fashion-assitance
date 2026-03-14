@@ -324,8 +324,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-            <div className="rounded-2xl bg-gradient-to-r from-silver/40 via-foreground/15 to-silver/40 p-[1.5px] shadow-[0_0_20px_rgba(148,163,184,0.35)]">
-              <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[0.9rem] bg-card">
+            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-border bg-card">
                 {displayUrl ? (
                   previewImageError ? (
                     <div className="flex flex-col items-center gap-2 px-6 text-center">
