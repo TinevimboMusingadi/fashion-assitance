@@ -168,16 +168,17 @@ export async function indexClothesFromUploads(
       .replace(/\.[^.]+$/, "")
       .replace(/[^a-zA-Z0-9_-]/g, "_");
 
+    const subCategory = inferSubCategory(
+      item.category,
+      classification.name,
+      Array.isArray(classification.style) ? classification.style : [],
+      classification.tags,
+    );
+
     const meta: ClothingMetadata = {
       id,
       name: classification.name,
       category: item.category,
-      subCategory: inferSubCategory(
-        item.category,
-        classification.name,
-        Array.isArray(classification.style) ? classification.style : [],
-        classification.tags,
-      ),
       color: classification.color ?? "unknown",
       colors: Array.isArray(classification.colors)
         ? classification.colors
@@ -201,6 +202,10 @@ export async function indexClothesFromUploads(
       createdAt: now,
       tags: classification.tags,
     };
+
+    if (subCategory) {
+      (meta as ClothingMetadata).subCategory = subCategory;
+    }
 
     await wardrobeCol.doc(id).set(meta);
     catalog.push(meta);

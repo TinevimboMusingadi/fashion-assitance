@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
           id,
           name: baseName || "Untitled item",
           category,
-          subCategory: undefined,
           color: "unknown",
           colors: [],
           occasion: ["casual"],
