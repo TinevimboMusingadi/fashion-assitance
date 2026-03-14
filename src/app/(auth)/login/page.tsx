@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   signInWithEmailAndPassword,
@@ -9,7 +9,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/dashboard";
@@ -136,5 +136,19 @@ export default function LoginPage() {
         </a>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <span className="text-sm text-muted">Loading...</span>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
