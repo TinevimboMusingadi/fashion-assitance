@@ -10,7 +10,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = new Set(["/", "/login", "/signup"]);
-const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon"];
+const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/assets/"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

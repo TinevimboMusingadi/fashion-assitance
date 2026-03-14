@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingIllustration } from "@/components/landing-illustration";
 
 export default function LandingPage() {
   return (
@@ -67,6 +68,9 @@ export default function LandingPage() {
               Sign in
             </Link>
           </div>
+
+          {/* Visual flow: base photo -> outfit pieces -> generated look (rotating) */}
+          <LandingIllustration />
 
           {/* Features */}
           <div className="grid gap-3 pt-8 sm:grid-cols-2 sm:gap-4 sm:pt-12 md:grid-cols-3">
