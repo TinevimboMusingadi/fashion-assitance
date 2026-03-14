@@ -14,6 +14,21 @@ let _storage: Storage | null = null;
 function getStorage(): Storage {
   if (_storage) return _storage;
 
+  const jsonKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (jsonKey) {
+    try {
+      const credentials = JSON.parse(jsonKey) as {
+        client_email?: string;
+        private_key?: string;
+        project_id?: string;
+      };
+      _storage = new Storage({ credentials });
+      return _storage;
+    } catch {
+      // fall through
+    }
+  }
+
   const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   _storage = credPath
     ? new Storage({ keyFilename: credPath })
