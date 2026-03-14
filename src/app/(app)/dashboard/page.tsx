@@ -90,9 +90,7 @@ export default function DashboardPage() {
   }, [token]);
 
   const displayUrl =
-    activePreview ??
-    outfitImageUrls[outfitImageUrls.length - 1] ??
-    null;
+    activePreview ?? outfitImageUrls[outfitImageUrls.length - 1] ?? null;
 
   useEffect(() => {
     setPreviewImageError(false);
@@ -375,7 +373,6 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
-          </div>
 
           <div>
             <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
