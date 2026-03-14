@@ -31,19 +31,40 @@ export interface GenerateOutfitResult {
   imageUrl: string;
 }
 
+function inferMimeFromPath(pathOrUrl: string): string {
+  const lower = pathOrUrl.toLowerCase();
+  if (lower.includes(".jpg") || lower.includes(".jpeg")) {
+    return "image/jpeg";
+  }
+  if (lower.includes(".png")) {
+    return "image/png";
+  }
+  return "image/png";
+}
+
 async function loadImageAsBase64FromUrl(
   url: string,
 ): Promise<{ data: string; mime: string }> {
   const resp = await fetch(url);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch image from URL: ${resp.status}`);
+  }
   const buffer = Buffer.from(await resp.arrayBuffer());
-  const ct = resp.headers.get("content-type") ?? "image/png";
-  return { data: buffer.toString("base64"), mime: ct };
+  const headerType = resp.headers.get("content-type") ?? "";
+  const inferred = inferMimeFromPath(url);
+  // If the header is not an image type, fall back to inferring from the URL.
+  const mime =
+    headerType.toLowerCase().startsWith("image/") && headerType !== "application/xml"
+      ? headerType
+      : inferred;
+  return { data: buffer.toString("base64"), mime };
 }
 
 async function loadImageFromStorageOrUrl(
   imageUrl: string,
   storagePath?: string,
 ): Promise<{ data: string; mime: string }> {
+  // Prefer loading directly from GCS when we know the internal storage path.
   if (storagePath) {
     try {
       const bucketType = storagePath.includes("/wardrobe/")
@@ -61,6 +82,34 @@ async function loadImageFromStorageOrUrl(
       // Fall through to URL fetch
     }
   }
+
+  // Legacy data may not have storagePath populated. Try to derive it from a
+  // https://storage.googleapis.com/<bucket>/<path> style URL so we can still
+  // download via GCS instead of relying on public HTTP access.
+  try {
+    const match = imageUrl.match(
+      /^https?:\/\/storage\.googleapis\.com\/[^/]+\/(.+)$/i,
+    );
+    if (match && match[1]) {
+      const derivedPath = match[1];
+      const bucketType = derivedPath.includes("/wardrobe/")
+        ? ("wardrobes" as const)
+        : derivedPath.includes("/generated/")
+          ? ("generated" as const)
+          : ("profiles" as const);
+      const buffer = await downloadFile(bucketType, derivedPath);
+      const ext = derivedPath
+        .toLowerCase()
+        .slice(derivedPath.lastIndexOf("."));
+      const mime = [".jpg", ".jpeg"].includes(ext)
+        ? "image/jpeg"
+        : "image/png";
+      return { data: buffer.toString("base64"), mime };
+    }
+  } catch {
+    // If we can't derive a path or download from GCS, fall back to URL fetch.
+  }
+
   return loadImageAsBase64FromUrl(imageUrl);
 }
 
