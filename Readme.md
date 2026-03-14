@@ -36,3 +36,7 @@ A personal fashion assistance agent that helps you pick outfits based on your wa
 - Gemini 2.0 Flash (agent + tools)
 - Open-Meteo (weather)
 - Local file storage (data/); production: GCS, Firestore
+
+##
+want to adds an interaction agent. 
+that use computer use etc 
