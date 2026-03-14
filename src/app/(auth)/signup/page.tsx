@@ -59,17 +59,17 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
-        <p className="mt-1 text-sm text-muted">Get started with Dripcheck</p>
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Create your account</h1>
+        <p className="mt-1 text-xs text-muted sm:text-sm">Get started with Dripcheck</p>
       </div>
 
       <button
         type="button"
         onClick={handleGoogle}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:gap-3 sm:py-3 sm:text-sm"
       >
         <svg width="18" height="18" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />

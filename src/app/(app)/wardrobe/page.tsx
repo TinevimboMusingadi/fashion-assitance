@@ -193,37 +193,37 @@ export default function WardrobePage() {
   };
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden">
+    <main className="flex h-screen flex-col overflow-hidden min-h-[100dvh]">
       {/* Header */}
-      <header className="relative border-b border-border/60 px-6 py-3.5">
+      <header className="relative shrink-0 border-b border-border/60 px-3 py-2.5 sm:px-6 sm:py-3.5">
         <div className="absolute inset-0 bg-gradient-to-r from-card via-background to-card opacity-60" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-foreground">
+        <div className="relative flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity sm:gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-foreground/10 sm:h-8 sm:w-8">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-foreground sm:w-4 sm:h-4">
                   <path d="M20.38 3.46 16 2 12 5.5 8 2 3.62 3.46l.18 6.04L12 22l8.2-12.5z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h1 className="text-base font-semibold tracking-tight text-foreground">Dripcheck</h1>
+              <h1 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">Dripcheck</h1>
             </a>
-            <span className="text-xs text-muted">/</span>
-            <span className="text-sm text-muted">Wardrobe</span>
+            <span className="text-xs text-muted hidden sm:inline">/</span>
+            <span className="text-xs text-muted sm:text-sm">Wardrobe</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a
               href="/dashboard"
-              className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
+              className="rounded-lg border border-border px-2 py-1 text-[10px] text-muted hover:text-foreground transition-colors sm:px-3 sm:py-1.5 sm:text-xs"
             >
               Dashboard
             </a>
-            <span className="text-xs text-muted truncate max-w-[120px]">
+            <span className="max-w-[80px] truncate text-[10px] text-muted sm:max-w-[120px] sm:text-xs">
               {user?.displayName ?? user?.email ?? ""}
             </span>
             <button
               type="button"
               onClick={signOut}
-              className="rounded-md px-2 py-1 text-[11px] text-muted hover:text-foreground transition-colors"
+              className="rounded-md px-1.5 py-0.5 text-[10px] text-muted hover:text-foreground transition-colors sm:px-2 sm:py-1 sm:text-[11px]"
             >
               Sign out
             </button>
@@ -231,15 +231,15 @@ export default function WardrobePage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-        <div className="mx-auto max-w-5xl space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 scrollbar-thin sm:p-6">
+        <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6">
           {/* Actions bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <select
                 value={uploadCategory}
                 onChange={(e) => setUploadCategory(e.target.value)}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground"
+                className="rounded-lg border border-border bg-card px-2 py-1 text-[10px] text-foreground sm:px-3 sm:py-1.5 sm:text-xs"
               >
                 {CATEGORY_TABS.filter((t) => t.id !== "all").map((t) => (
                   <option key={t.id} value={t.id}>{t.label}</option>
@@ -249,9 +249,9 @@ export default function WardrobePage() {
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+                className="rounded-lg bg-foreground px-3 py-1 text-[10px] font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-xs"
               >
-                {uploading ? "Uploading..." : "Add items"}
+                {uploading ? "..." : "Add items"}
               </button>
               <input
                 ref={inputRef}
@@ -262,16 +262,16 @@ export default function WardrobePage() {
                 onChange={(e) => handleUpload(e.target.files)}
               />
             </div>
-            <div className="flex-1" />
+            <div className="flex-1 min-w-0" />
             <button
               type="button"
               onClick={handleReindex}
               disabled={indexing}
-              className="rounded-lg border border-border px-4 py-1.5 text-xs text-muted hover:text-foreground transition-colors disabled:opacity-50"
+              className="rounded-lg border border-border px-2 py-1 text-[10px] text-muted hover:text-foreground transition-colors disabled:opacity-50 sm:px-4 sm:py-1.5 sm:text-xs"
             >
-              {indexing ? "Re-indexing..." : "Re-index wardrobe"}
+              {indexing ? "..." : "Re-index"}
             </button>
-            <span className="text-xs text-muted">{items.length} items</span>
+            <span className="text-[10px] text-muted sm:text-xs">{items.length} items</span>
           </div>
 
           {/* Base Photos Section */}
@@ -346,8 +346,8 @@ export default function WardrobePage() {
             )}
           </div>
 
-          {/* Category tabs */}
-          <div className="flex gap-2 border-b border-border/60 pb-2">
+          {/* Category tabs - scroll on small screens */}
+          <div className="flex gap-1.5 overflow-x-auto border-b border-border/60 pb-2 scrollbar-thin sm:flex-wrap sm:gap-2">
             {CATEGORY_TABS.map((tab) => {
               const count =
                 tab.id === "all"
@@ -358,7 +358,7 @@ export default function WardrobePage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-medium transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
                     activeTab === tab.id
                       ? "bg-foreground/10 text-foreground"
                       : "text-muted hover:text-foreground"

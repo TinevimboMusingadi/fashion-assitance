@@ -2,29 +2,29 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background min-h-[100dvh]">
       {/* Nav */}
-      <nav className="flex items-center justify-between border-b border-border/40 px-6 py-4">
+      <nav className="flex items-center justify-between border-b border-border/40 px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-foreground/10">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-foreground">
               <path d="M20.38 3.46 16 2 12 5.5 8 2 3.62 3.46l.18 6.04L12 22l8.2-12.5z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className="text-base font-semibold tracking-tight text-foreground">
+          <span className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
             Dripcheck
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/login"
-            className="rounded-lg px-4 py-2 text-sm text-muted transition-colors hover:text-foreground"
+            className="rounded-lg px-3 py-1.5 text-xs text-muted transition-colors hover:text-foreground sm:px-4 sm:py-2 sm:text-sm"
           >
             Sign in
           </Link>
           <Link
             href="/signup"
-            className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+            className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-colors hover:bg-foreground/90 sm:px-4 sm:py-2 sm:text-sm"
           >
             Get started
           </Link>
@@ -32,44 +32,44 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <div className="mx-auto max-w-2xl space-y-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-1.5 text-xs text-muted">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 text-center sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-2xl space-y-6 sm:space-y-8">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1 text-[10px] text-muted sm:px-4 sm:py-1.5 sm:text-xs">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               AI-powered fashion assistant
             </div>
-            <h1 className="text-5xl font-bold leading-tight tracking-tight text-foreground sm:text-6xl">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
               Your wardrobe,
               <br />
               <span className="bg-gradient-to-r from-silver via-foreground to-silver bg-clip-text text-transparent">
                 reimagined by AI
               </span>
             </h1>
-            <p className="mx-auto max-w-lg text-lg leading-relaxed text-muted">
+            <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted sm:text-base md:text-lg">
               Upload your clothes, and let AI plan your outfits based on
               weather, style, and what you wore this week. See yourself
               wearing the outfit before you put it on.
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/signup"
-              className="rounded-xl bg-foreground px-8 py-3.5 text-sm font-semibold text-background transition-all hover:bg-foreground/90 active:scale-[0.98]"
+              className="w-full max-w-[280px] rounded-xl bg-foreground px-6 py-3 text-sm font-semibold text-background transition-all hover:bg-foreground/90 active:scale-[0.98] sm:w-auto sm:max-w-none sm:px-8 sm:py-3.5"
             >
               Get started free
             </Link>
             <Link
               href="/login"
-              className="rounded-xl border border-border px-8 py-3.5 text-sm font-medium text-foreground transition-all hover:bg-card active:scale-[0.98]"
+              className="w-full max-w-[280px] rounded-xl border border-border px-6 py-3 text-sm font-medium text-foreground transition-all hover:bg-card active:scale-[0.98] sm:w-auto sm:max-w-none sm:px-8 sm:py-3.5"
             >
               Sign in
             </Link>
           </div>
 
           {/* Features */}
-          <div className="grid gap-4 pt-12 sm:grid-cols-3">
+          <div className="grid gap-3 pt-8 sm:grid-cols-2 sm:gap-4 sm:pt-12 md:grid-cols-3">
             {[
               {
                 title: "Index your wardrobe",
@@ -117,8 +117,8 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 px-6 py-4 text-center">
-        <p className="text-xs text-muted/60">
+      <footer className="border-t border-border/40 px-4 py-3 text-center sm:px-6 sm:py-4">
+        <p className="text-[10px] text-muted/60 sm:text-xs">
           Dripcheck &middot; Built with Next.js, Gemini AI, and Firebase
         </p>
       </footer>

@@ -171,67 +171,83 @@ export function Chat({ onImageUrl, sessionId }: ChatProps) {
   }
 
   return (
-    <div className="flex h-full min-h-[400px] flex-col">
-      <div className="flex-1 min-h-[280px] overflow-y-auto space-y-3 rounded-xl border border-border bg-card/50 p-4 scrollbar-thin">
+    <div className="flex h-full min-h-[300px] flex-col sm:min-h-[400px]">
+      <div className="flex-1 min-h-[200px] overflow-y-auto space-y-2 rounded-xl border border-border bg-card/50 p-3 scrollbar-thin sm:min-h-[280px] sm:space-y-3 sm:p-4">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-muted text-center text-sm">
+            <p className="text-muted text-center text-xs sm:text-sm px-2">
               Ask for outfit suggestions, search your wardrobe, or plan what to
               wear based on the weather.
             </p>
           </div>
         )}
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+        {messages.map((m, i) => {
+          const isOutfitReply =
+            m.role === "assistant" && m.images && m.images.length > 0;
+          const bubble = (
             <div
-              className={`max-w-[88%] rounded-2xl px-4 py-2.5 ${
+              className={`max-w-[92%] rounded-2xl px-3 py-2 sm:max-w-[88%] sm:px-4 sm:py-2.5 ${
                 m.role === "user"
                   ? "bg-accent text-foreground rounded-br-md"
                   : "bg-border/40 text-foreground rounded-bl-md"
               }`}
             >
-              {m.role === "assistant" && m.images && m.images.length > 0 && (
+              {isOutfitReply && (
                 <div className="mb-2 flex flex-wrap gap-2">
-                  {m.images.map((url, idx) => (
+                  {m.images!.map((url, idx) => (
                     <a
                       key={`${url}-${idx}`}
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block overflow-hidden rounded-lg border border-border bg-card"
+                      className="block overflow-hidden rounded-lg border border-border bg-card transition-transform duration-150 hover:scale-[1.03]"
                     >
                       <img
                         src={url}
                         alt={`Generated outfit ${idx + 1}`}
-                        className="h-24 w-auto max-w-[140px] object-cover"
+                        className="h-20 w-auto max-w-[120px] object-cover sm:h-24 sm:max-w-[140px]"
                       />
                     </a>
                   ))}
                 </div>
               )}
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="whitespace-pre-wrap text-xs leading-relaxed sm:text-sm">
                 {m.content}
               </p>
               {m.role === "assistant" && m.logs && m.logs.length > 0 && (
                 <AgentLogBlock logs={m.logs} generatedImages={m.images} />
               )}
             </div>
-          </div>
-        ))}
+          );
+
+          return (
+            <div
+              key={i}
+              className={`flex ${
+                m.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              {isOutfitReply ? (
+                <div className="max-w-[92%] rounded-2xl bg-gradient-to-r from-silver/30 via-foreground/20 to-silver/30 p-[1.5px] shadow-[0_0_18px_rgba(148,163,184,0.45)] sm:max-w-[88%]">
+                  {bubble}
+                </div>
+              ) : (
+                bubble
+              )}
+            </div>
+          );
+        })}
 
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-border/40 px-4 py-2.5">
+            <div className="max-w-[92%] rounded-2xl rounded-bl-md bg-border/40 px-3 py-2 sm:max-w-[88%] sm:px-4 sm:py-2.5">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-silver [animation-delay:0ms]" />
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-silver [animation-delay:150ms]" />
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-silver [animation-delay:300ms]" />
                 </div>
-                <span className="text-muted text-xs">
+                <span className="text-muted text-[10px] sm:text-xs truncate max-w-[180px] sm:max-w-none">
                   {streamingLogs.length > 0
                     ? streamingLogs[streamingLogs.length - 1]
                     : "Thinking..."}
@@ -254,19 +270,19 @@ export function Chat({ onImageUrl, sessionId }: ChatProps) {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
+      <form onSubmit={handleSubmit} className="mt-2 flex gap-1.5 sm:mt-3 sm:gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="What should I wear today?"
-          className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 focus:border-silver/50 focus:outline-none focus:ring-1 focus:ring-silver/30 transition-colors"
+          className="min-w-0 flex-1 rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground placeholder:text-muted/60 focus:border-silver/50 focus:outline-none focus:ring-1 focus:ring-silver/30 transition-colors sm:px-4 sm:py-2.5 sm:text-sm"
           disabled={loading}
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-all hover:bg-foreground/90 active:scale-95 disabled:opacity-30 disabled:active:scale-100"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-all hover:bg-foreground/90 active:scale-95 disabled:opacity-30 disabled:active:scale-100 sm:h-[42px] sm:w-[42px]"
         >
           <svg
             width="18"

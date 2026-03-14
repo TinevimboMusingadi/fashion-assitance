@@ -8,6 +8,20 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        gentlePulse: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.85" },
+        },
+      },
+      animation: {
+        fadeInUp: "fadeInUp 0.4s ease-out forwards",
+        gentlePulse: "gentlePulse 2.5s ease-in-out infinite",
+      },
       colors: {
         background: "#0a0a0a",
         foreground: "#fafafa",
